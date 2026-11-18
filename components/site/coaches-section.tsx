@@ -3,6 +3,7 @@
 import CoachSheet, { initials } from "@/components/site/coach-sheet";
 import PortraitBackdrop from "@/components/site/portrait-backdrop";
 import { siteConfig, type Coach } from "@/config/site";
+import type { CoachRecord } from "@/lib/bento";
 import { cn } from "@/lib/utils";
 import { ArrowRight, Whistle } from "lucide-react";
 import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
@@ -149,11 +150,12 @@ function CoachCard({ coach, onOpen }: { coach: Coach; onOpen: () => void }) {
 /*                                    seção                                   */
 /* -------------------------------------------------------------------------- */
 
-export default function CoachesSection() {
+/** Treinadores chegam do store (`lib/bento-store`, editáveis em /admin), já filtrados pelos ativos. */
+export default function CoachesSection({ items }: { items: CoachRecord[] }) {
   const { coaches } = siteConfig;
   const [selected, setSelected] = useState<string | null>(null);
-  const items: readonly Coach[] = coaches.items;
-  const coach = items.find((c) => c.name === selected) ?? null;
+  const coach: Coach | null = items.find((c) => c.id === selected) ?? null;
+  if (!items.length) return null;
 
   return (
     <section
@@ -179,12 +181,12 @@ export default function CoachesSection() {
         {items.map((c, i) => (
           <motion.div
             initial={{ opacity: 0, y: 28 }}
-            key={c.name}
+            key={c.id}
             transition={{ duration: 0.7, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
             viewport={{ once: true, margin: "-80px" }}
             whileInView={{ opacity: 1, y: 0 }}
           >
-            <CoachCard coach={c} onOpen={() => setSelected(c.name)} />
+            <CoachCard coach={c} onOpen={() => setSelected(c.id)} />
           </motion.div>
         ))}
       </div>

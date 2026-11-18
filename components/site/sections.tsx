@@ -1,5 +1,6 @@
 "use client";
 
+import AchievementCard from "@/components/site/achievement-card";
 import AthleteSheet from "@/components/site/athlete-sheet";
 import AnimatedList from "@/components/ui/animated-list";
 import BlurHighlight from "@/components/ui/blur-highlight";
@@ -7,21 +8,19 @@ import InteractiveSchedule from "@/components/ui/interactive-schedule";
 import ParticleChart from "@/components/ui/particle-chart";
 import ParticleText from "@/components/ui/particle-text";
 import Pipeline from "@/components/ui/pipeline";
-import { siteConfig, type TeamMember } from "@/config/site";
+import { siteConfig } from "@/config/site";
+import { athleteToMember, type BentoView } from "@/lib/bento";
 import { cn, externalLinkProps } from "@/lib/utils";
 import { CalendarDays, Dumbbell, Flame, MapPin, Swords, Trophy } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import dynamic from "next/dynamic";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 // WebGL só no cliente; o placeholder reserva a mesma altura (sem pulo de layout)
 const SpinShutter = dynamic(() => import("@/components/ui/spin-shutter"), {
   ssr: false,
   loading: () => <div aria-hidden className="h-[492px] sm:h-[612px]" />,
 });
-
-/** Itens da órbita do elenco: só a foto vai para o 3D; nome e posição viram a legenda. */
-const ROSTER_ITEMS = (siteConfig.team.members as readonly TeamMember[]).map((m) => ({ title: m.name, subtitle: m.role, src: m.photo }));
 
 /* -------------------------------------------------------------------------- */
 /*                                   helpers                                  */
@@ -114,49 +113,18 @@ function CardTitle({ icon, title, description, dark }: { icon: ReactNode; title:
   );
 }
 
-const BADGE_STYLES: Record<string, string> = {
-  Internacional: "bg-brand text-on-brand",
-  Seleção: "bg-brand-soft text-on-brand",
-  Nacional: "bg-brand/15 text-brand",
-  Estadual: "bg-brand-soft/15 text-brand-soft",
-};
-
-/** Cartão compacto do feed de conquistas (foto redonda, atleta, resultado e categoria). */
-function AchievementCard({ athlete, photo, title, year, badge }: { athlete: string; photo: string; title: string; year: string; badge: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white/[0.04] p-2.5 ring-1 ring-white/10">
-      <span className="relative size-11 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-brand/30 to-brand-soft/20 ring-1 ring-brand/30">
-        {/* PNG de corpo inteiro: amplia e ancora no rosto */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt=""
-          className="size-full origin-[50%_14%] scale-[2.3] object-cover object-[50%_0%]"
-          height={44}
-          loading="lazy"
-          src={photo}
-          width={44}
-        />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-sm font-semibold text-white">{athlete}</p>
-          <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold", BADGE_STYLES[badge] ?? "bg-white/10 text-neutral-300")}>
-            {badge}
-          </span>
-        </div>
-        <p className="mt-0.5 line-clamp-2 text-xs leading-snug whitespace-normal text-neutral-400">
-          {title}
-          {year && <span className="text-neutral-500"> · {year}</span>}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-export function Bento() {
+/**
+ * Bento Grid. Os painéis dinâmicos (jogos, pódios, conquistas e o elenco da
+ * órbita 3D) chegam por `data`, vindos de `lib/bento-store` (editáveis em
+ * /admin); títulos e textos fixos continuam em `config/site.ts`.
+ */
+export function Bento({ data }: { data: BentoView }) {
   const { bento, team } = siteConfig;
   const [selected, setSelected] = useState<string | null>(null);
-  const member = team.members.find((m) => m.name === selected) ?? null;
+  const athletes = data.athletes;
+  // órbita: só a foto vai para o 3D; nome e posição viram a legenda
+  const rosterItems = useMemo(() => athletes.map((a) => ({ title: a.name, subtitle: a.role, src: a.image || undefined })), [athletes]);
+  const athlete = athletes.find((a) => a.id === selected) ?? null;
   return (
     <section className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-12 xl:px-16 py-20 sm:py-28" id="time">
       <Reveal className="mb-12 max-w-2xl">
@@ -175,15 +143,20 @@ export function Bento() {
                 title={bento.matches.title}
               />
               <ul className="space-y-2">
-                {bento.matches.items.map((m) => (
-                  <li className="flex items-center gap-4 rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5" key={m.event}>
+                {data.matches.map((m) => (
+                  <li className="flex items-center gap-4 rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5" key={m.id}>
                     <span className="w-14 shrink-0 text-center text-xs leading-tight font-semibold text-brand">
                       {m.date}
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-white">{m.event}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium text-white">{m.title}</span>
+                        {m.tag && (
+                          <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">{m.tag}</span>
+                        )}
+                      </span>
                       <span className="flex items-center gap-1 text-xs text-neutral-400">
-                        <MapPin className="size-3" /> {m.place}
+                        <MapPin className="size-3" /> {m.location}
                       </span>
                     </span>
                   </li>
@@ -206,7 +179,7 @@ export function Bento() {
                   title={bento.stats.title}
                 />
               }
-              tabs={bento.stats.tabs}
+              tabs={data.chartTabs}
             />
           </Card>
         </Reveal>
@@ -232,16 +205,16 @@ export function Bento() {
             {/* feed vivo: cartões entram no topo e empurram os anteriores */}
             <div className="relative mt-5 h-[400px] flex-1 overflow-hidden [mask-image:linear-gradient(to_bottom,black_75%,transparent)]">
               <AnimatedList
-                items={bento.achievements.feed}
+                items={data.achievements}
                 label="Conquistas recentes do elenco"
-                renderItem={(a) => <AchievementCard {...a} />}
+                renderItem={(a) => <AchievementCard athlete={a.athleteName} badge={a.badge} photo={a.avatar} title={a.text} year={a.year} />}
               />
             </div>
           </Card>
         </Reveal>
 
-        {/* Elenco — perfis dos atletas */}
-        <div className="md:col-span-2 lg:col-span-12">
+        {/* Elenco — perfis dos atletas (some se nenhum atleta estiver visível) */}
+        {rosterItems.length > 0 && <div className="md:col-span-2 lg:col-span-12">
           <Reveal className="mt-8 mb-5 flex items-end justify-between gap-4">
             <div>
               <Eyebrow>{team.eyebrow}</Eyebrow>
@@ -257,21 +230,25 @@ export function Bento() {
               canvasClassName="h-[420px] sm:h-[540px]"
               distance={2.7}
               intro
-              isPaused={member !== null}
-              items={ROSTER_ITEMS}
+              isPaused={athlete !== null}
+              items={rosterItems}
               // cada atleta aparece uma única vez (sem completar o anel com repetições)
               minCards={0}
-              onSelect={(i) => setSelected(team.members[i].name)}
+              onSelect={(i) => setSelected(athletes[i]?.id ?? null)}
               radius={0.08}
               roll={-24}
               speed={0.05}
               tilt={16}
             />
           </Reveal>
-        </div>
+        </div>}
       </div>
 
-      <AthleteSheet member={member} onOpenChange={(open) => !open && setSelected(null)} />
+      <AthleteSheet
+        member={athlete && athleteToMember(athlete)}
+        onOpenChange={(open) => !open && setSelected(null)}
+        stats={athlete?.stats}
+      />
     </section>
   );
 }

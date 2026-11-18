@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dados editados pelo /admin (gerados a partir de config/site.ts)
+/data/

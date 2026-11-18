@@ -6,6 +6,16 @@ import Hero from "@/components/site/hero";
 import Navbar, { ScreenFrame } from "@/components/site/navbar";
 import PricingSection from "@/components/site/pricing-section";
 import { Bento, Footer, ParticleShowcase, ScheduleSection, Statement, Steps } from "@/components/site/sections";
+import { getBentoView } from "@/lib/bento-store";
+
+/** Dados dinâmicos (editáveis em /admin). Cacheados com a tag "bento": cada edição expira o cache. */
+async function BentoWithData() {
+  return <Bento data={await getBentoView()} />;
+}
+
+async function CoachesWithData() {
+  return <CoachesSection items={(await getBentoView()).coachesList} />;
+}
 
 export default function Home() {
   return (
@@ -21,8 +31,8 @@ export default function Home() {
       <main className="flex-1" id="conteudo">
         <Hero />
         <Statement />
-        <CoachesSection />
-        <Bento />
+        <CoachesWithData />
+        <BentoWithData />
         <ScheduleSection />
         <PricingSection />
         <ParticleShowcase />

@@ -14,9 +14,12 @@ import { useEffect } from "react";
  */
 export default function AthleteSheet({
   member,
+  stats,
   onOpenChange,
 }: {
   member: TeamMember | null;
+  /** Números do perfil (editáveis em /admin). Zerados = não aparecem. */
+  stats?: { podiums: number; titles: number };
   onOpenChange: (open: boolean) => void;
 }) {
   const open = member !== null;
@@ -52,6 +55,20 @@ export default function AthleteSheet({
                 <div>
                   <SheetTitle className="text-2xl font-semibold text-white">{member.name}</SheetTitle>
                   <SheetDescription className="text-neutral-400">{member.role}</SheetDescription>
+                  {stats && (stats.podiums > 0 || stats.titles > 0) && (
+                    <p className="mt-2 flex flex-wrap gap-1.5 text-xs">
+                      {stats.podiums > 0 && (
+                        <span className="rounded-full bg-brand/10 px-2.5 py-0.5 font-medium text-brand">
+                          {stats.podiums} {stats.podiums === 1 ? "pódio" : "pódios"}
+                        </span>
+                      )}
+                      {stats.titles > 0 && (
+                        <span className="rounded-full bg-white/5 px-2.5 py-0.5 font-medium text-neutral-300 ring-1 ring-white/10">
+                          {stats.titles} {stats.titles === 1 ? "título" : "títulos"}
+                        </span>
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
             </SheetHeader>
