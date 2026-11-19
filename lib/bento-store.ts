@@ -15,6 +15,7 @@
  *   escrita falha com `ConflictError` em vez de sobrescrever a edição alheia.
  */
 
+import { cleanEnv } from "@/lib/env";
 import { buildSeed, parseBentoData, toView, type BentoData, type BentoView } from "@/lib/bento";
 import { cacheLife, cacheTag, revalidateTag } from "next/cache";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
@@ -193,8 +194,6 @@ class MisconfiguredRepository implements BentoRepository {
   }
 }
 
-/** Remove espaços, quebras de linha e aspas que costumam vir junto ao colar o valor no painel. */
-const cleanEnv = (v: string | undefined) => (v ?? "").trim().replace(/^(['"`])([\s\S]*)\1$/, "$2").trim();
 
 /** Mostra só o começo do valor (para o erro ajudar sem expor o conteúdo inteiro). */
 const maskValue = (v: string) => `"${v.slice(0, 10)}${v.length > 10 ? "…" : ""}" (${v.length} caracteres)`;

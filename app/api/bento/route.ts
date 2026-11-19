@@ -40,6 +40,7 @@ import {
   type Badge,
   type BentoData,
 } from "@/lib/bento";
+import { cleanEnv } from "@/lib/env";
 import { ConflictError, getRepository, mutateBento, readBento, StorageError } from "@/lib/bento-store";
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 
@@ -56,14 +57,19 @@ class HttpError extends Error {
 /*                                autenticação                                */
 /* -------------------------------------------------------------------------- */
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "pcvp2026";
+const RAW_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = cleanEnv(RAW_ADMIN_PASSWORD) || "pcvp2026";
+// diagnóstico sem expor o valor: só se veio definida, tamanho e se precisou de limpeza
+console.info(
+  `[admin] ADMIN_PASSWORD ${RAW_ADMIN_PASSWORD === undefined ? "não definida (usando o padrão)" : `definida: ${ADMIN_PASSWORD.length} caracteres${RAW_ADMIN_PASSWORD !== ADMIN_PASSWORD ? ", espaços/aspas removidos" : ""}`}`
+);
 const RESET_WORD = "RESTAURAR";
 const digest = (s: string) => createHash("sha256").update(s).digest();
 
 /** Compara em tempo constante (hash dos dois lados → mesmo tamanho). */
 function isAdmin(request: Request) {
-  const key = request.headers.get("x-admin-key");
-  return key !== null && timingSafeEqual(digest(key), digest(ADMIN_PASSWORD));
+  const key = request.headers.get("x-admin-key")?.trim();
+  return !!key && timingSafeEqual(digest(key), digest(ADMIN_PASSWORD));
 }
 
 function requireAdmin(request: Request) {

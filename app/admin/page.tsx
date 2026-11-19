@@ -101,7 +101,8 @@ function Login({ onLogin }: { onLogin: (key: string, result: ApiResult) => void 
     setLoading(true);
     setError(null);
     try {
-      onLogin(password, await api(password, "GET"));
+      const key = password.trim(); // espaço colado junto não invalida a senha
+      onLogin(key, await api(key, "GET"));
     } catch (err) {
       setError(err instanceof ApiError && err.status === 401 ? "Senha incorreta." : (err as Error).message);
     } finally {
