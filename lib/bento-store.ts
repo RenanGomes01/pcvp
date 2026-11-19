@@ -93,12 +93,15 @@ type Row = { data: unknown; updated_at: string };
 class SupabaseBentoRepository implements BentoRepository {
   readonly kind = "supabase";
   private readonly endpoint: string;
+  private readonly host: string;
 
+  /** `origin` já validado por `parseSupabaseConfig` (ex.: https://xxxx.supabase.co). */
   constructor(
-    url: string,
+    origin: string,
     private readonly key: string
   ) {
-    this.endpoint = `${url.replace(/\/+$/, "")}/rest/v1/${SUPABASE_TABLE}`;
+    this.endpoint = `${origin}/rest/v1/${SUPABASE_TABLE}`;
+    this.host = new URL(origin).host;
   }
 
   /** Chamada à API REST com a service role (só no servidor; nunca vai para o navegador). */
@@ -117,7 +120,8 @@ class SupabaseBentoRepository implements BentoRepository {
         ...(prefer ? { Prefer: prefer } : {}),
       },
     }).catch((err: unknown) => {
-      throw new StorageError(`Não foi possível conectar ao Supabase (${(err as Error).name === "TimeoutError" ? "tempo esgotado" : "rede"}). Confira SUPABASE_URL.`);
+      console.error(`[bento] Supabase ${method} ${SUPABASE_TABLE}: falha de conexão com ${this.host}:`, err);
+      throw new StorageError(`Não foi possível conectar ao Supabase em ${this.host} (${networkReason(err)}). Confira SUPABASE_URL.`);
     });
     if (!res.ok) {
       // detalhe do PostgREST só no log do servidor (ajuda a diagnosticar; nunca inclui a chave)
@@ -177,18 +181,107 @@ class SupabaseBentoRepository implements BentoRepository {
 /*                                   escolha                                  */
 /* -------------------------------------------------------------------------- */
 
+/** Configuração do Supabase presente mas inválida: falha com a explicação, sem tocar em nada. */
+class MisconfiguredRepository implements BentoRepository {
+  readonly kind = "supabase";
+  constructor(private readonly reason: string) {}
+  read(): Promise<BentoSnapshot> {
+    return Promise.reject(new StorageError(this.reason));
+  }
+  write(): Promise<void> {
+    return Promise.reject(new StorageError(this.reason));
+  }
+}
+
+/** Remove espaços, quebras de linha e aspas que costumam vir junto ao colar o valor no painel. */
+const cleanEnv = (v: string | undefined) => (v ?? "").trim().replace(/^(['"`])([\s\S]*)\1$/, "$2").trim();
+
+/** Mostra só o começo do valor (para o erro ajudar sem expor o conteúdo inteiro). */
+const maskValue = (v: string) => `"${v.slice(0, 10)}${v.length > 10 ? "…" : ""}" (${v.length} caracteres)`;
+
+const URL_FORMAT = "o formato esperado é https://<id-do-projeto>.supabase.co (Supabase → Project Settings → API)";
+
+type SupabaseConfig = { ok: true; origin: string; key: string } | { ok: false; reason: string } | null;
+
+/**
+ * Lê e valida `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`.
+ * `null` = nenhuma das duas definida (usa o arquivo local).
+ */
+export function parseSupabaseConfig(env: Partial<Record<string, string>> = process.env): SupabaseConfig {
+  const rawUrl = cleanEnv(env.SUPABASE_URL);
+  const key = cleanEnv(env.SUPABASE_SERVICE_ROLE_KEY).replace(/^Bearer\s+/i, "");
+  if (!rawUrl && !key) return null;
+  if (!rawUrl) return { ok: false, reason: "SUPABASE_SERVICE_ROLE_KEY está definida, mas SUPABASE_URL não." };
+  if (!key) return { ok: false, reason: "SUPABASE_URL está definida, mas SUPABASE_SERVICE_ROLE_KEY não." };
+
+  if (!/^https?:\/\//i.test(rawUrl)) {
+    return { ok: false, reason: `SUPABASE_URL malformada: precisa começar com https:// — recebido ${maskValue(rawUrl)}; ${URL_FORMAT}.` };
+  }
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return { ok: false, reason: `SUPABASE_URL malformada (não é uma URL válida) — recebido ${maskValue(rawUrl)}; ${URL_FORMAT}.` };
+  }
+  if (/(^|\.)supabase\.com$/i.test(url.hostname)) {
+    return { ok: false, reason: `SUPABASE_URL aponta para o painel (${url.hostname}), não para a API do projeto; ${URL_FORMAT}.` };
+  }
+
+  if (/\s/.test(key)) return { ok: false, reason: "SUPABASE_SERVICE_ROLE_KEY contém espaços ou quebras de linha no meio; cole a chave de novo." };
+  if (/^sb_publishable_/i.test(key) || jwtRole(key) === "anon") {
+    return { ok: false, reason: "SUPABASE_SERVICE_ROLE_KEY é a chave pública (anon/publishable); use a service_role (secret)." };
+  }
+
+  // só a origem: tolera barra final ou /rest/v1 colados junto
+  return { ok: true, origin: url.origin, key };
+}
+
+/** `role` de uma chave JWT do Supabase (ou null se não for JWT). */
+function jwtRole(key: string): string | null {
+  const payload = key.split(".")[1];
+  if (!payload || !key.startsWith("eyJ")) return null;
+  try {
+    return (JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { role?: string }).role ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Motivo legível de uma falha de fetch (DNS, recusa, timeout…). */
+function networkReason(err: unknown): string {
+  const e = err as Error & { cause?: { code?: string } };
+  if (e?.name === "TimeoutError") return `sem resposta em ${TIMEOUT_MS / 1000}s`;
+  switch (e?.cause?.code) {
+    case "ENOTFOUND":
+    case "EAI_AGAIN":
+      return "endereço não encontrado (DNS): confira o id do projeto na URL";
+    case "ECONNREFUSED":
+      return "conexão recusada";
+    case "ECONNRESET":
+      return "conexão interrompida";
+    case "CERT_HAS_EXPIRED":
+    case "UNABLE_TO_VERIFY_LEAF_SIGNATURE":
+    case "DEPTH_ZERO_SELF_SIGNED_CERT":
+      return "certificado TLS inválido";
+    default:
+      return e?.cause?.code ? `erro de rede ${e.cause.code}` : "erro de rede";
+  }
+}
+
 let repo: BentoRepository | null = null;
 
 /** Supabase quando as duas variáveis existem; senão o arquivo local (só desenvolvimento). */
 export function getRepository(): BentoRepository {
   if (repo) return repo;
-  const url = process.env.SUPABASE_URL?.trim();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (url && key) {
-    repo = new SupabaseBentoRepository(url, key);
-  } else {
-    if (url || key) console.warn("[bento] defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY juntas; usando data/bento.json");
+  const config = parseSupabaseConfig();
+  if (!config) {
     repo = new FileBentoRepository(DATA_FILE);
+  } else if (config.ok) {
+    repo = new SupabaseBentoRepository(config.origin, config.key);
+  } else {
+    // configuração quebrada em produção: não cai no arquivo (as edições sumiriam); mostra o motivo
+    console.error(`[bento] ${config.reason}`);
+    repo = new MisconfiguredRepository(config.reason);
   }
   return repo;
 }
@@ -210,11 +303,14 @@ export async function readBento(): Promise<BentoData> {
 export async function getBentoView(): Promise<BentoView> {
   "use cache";
   cacheTag(BENTO_TAG);
-  cacheLife("max");
   try {
-    return toView((await getRepository().read()).data);
+    const view = toView((await getRepository().read()).data);
+    cacheLife("max");
+    return view;
   } catch (err) {
     console.error("[bento] falha ao ler os dados; usando config/site.ts:", err);
+    // falha não fica cacheada por muito tempo: corrigida a configuração, a Home se recupera sozinha
+    cacheLife("minutes");
     return toView(buildSeed());
   }
 }
