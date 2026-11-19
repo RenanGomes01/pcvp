@@ -117,7 +117,8 @@ export const siteConfig = {
   name: "PCVP",
   fullName: "PCVP Vôlei de Praia",
   description: "Time de vôlei de praia. Treino, competição e comunidade na areia.",
-  url: "https://pcvp.example.com",
+  // domínio público (base das URLs absolutas de og:image e afins)
+  url: "https://pcvp.vercel.app",
   locale: "pt-BR",
 
   nav: {
