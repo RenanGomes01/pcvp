@@ -5,7 +5,7 @@
  *                   athletes, coachesList } (só itens ativos).
  *                   Com `x-admin-key` válido, inclui também `raw` (documento completo,
  *                   com conquistas inativas). Chave inválida → 401.
- *  POST   (admin)   { action: "reset" }                                   restaura o seed
+ *  POST   (admin)   { action: "reset", confirm: "RESTAURAR" }             restaura o seed (apaga os dados atuais!)
  *                   { entity: "matches", item }                            cria jogo
  *                   { entity: "achievements", item, addToPodium? }         cria conquista no topo (+1 no gráfico)
  *                   { entity: "podiumYears", item }                        cria ano
@@ -20,7 +20,9 @@
  *  <lista> = matches | achievements | athletes | coachesList
  *  <lista com active> = achievements | athletes | coachesList
  *
- * Toda escrita responde { raw, view } e expira o cache da Home (tag "bento").
+ * Toda escrita responde { raw, view, storage } e expira o cache da Home (tag "bento").
+ * `storage` = "supabase" | "arquivo" (onde os dados estão sendo gravados).
+ * Conflito de versão (outra aba/servidor salvou antes) → 409.
  */
 
 import {
@@ -38,7 +40,7 @@ import {
   type Badge,
   type BentoData,
 } from "@/lib/bento";
-import { mutateBento, readBento } from "@/lib/bento-store";
+import { ConflictError, getRepository, mutateBento, readBento, StorageError } from "@/lib/bento-store";
 import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
 
 class HttpError extends Error {
@@ -55,6 +57,7 @@ class HttpError extends Error {
 /* -------------------------------------------------------------------------- */
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "pcvp2026";
+const RESET_WORD = "RESTAURAR";
 const digest = (s: string) => createHash("sha256").update(s).digest();
 
 /** Compara em tempo constante (hash dos dois lados → mesmo tamanho). */
@@ -142,7 +145,7 @@ function reorder<T extends { id: string; order: number }>(list: T[], ids: unknow
 async function respond(run: () => Promise<BentoData>) {
   try {
     const raw = await run();
-    return Response.json({ raw, view: toView(raw) });
+    return Response.json({ raw, view: toView(raw), storage: getRepository().kind });
   } catch (err) {
     return errorResponse(err);
   }
@@ -151,6 +154,8 @@ async function respond(run: () => Promise<BentoData>) {
 function errorResponse(err: unknown) {
   if (err instanceof HttpError) return Response.json({ error: err.message }, { status: err.status });
   if (err instanceof ValidationError) return Response.json({ error: err.message }, { status: 400 });
+  if (err instanceof ConflictError) return Response.json({ error: err.message }, { status: 409 });
+  if (err instanceof StorageError) return Response.json({ error: err.message }, { status: 502 });
   console.error("[api/bento]", err);
   const readonlyFs = (err as NodeJS.ErrnoException)?.code === "EROFS" || (err as NodeJS.ErrnoException)?.code === "EACCES";
   return Response.json(
@@ -168,7 +173,7 @@ export async function GET(request: Request) {
     const wantsAdmin = request.headers.has("x-admin-key");
     if (wantsAdmin) requireAdmin(request);
     const raw = await readBento();
-    return Response.json({ ...toView(raw), ...(wantsAdmin ? { raw } : {}) }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ ...toView(raw), ...(wantsAdmin ? { raw, storage: getRepository().kind } : {}) }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     return errorResponse(err);
   }
@@ -178,7 +183,11 @@ export async function POST(request: Request) {
   return respond(async () => {
     requireAdmin(request);
     const b = await body(request);
-    if (b.action === "reset") return mutateBento(() => buildSeed());
+    if (b.action === "reset") {
+      // sobrescreve os dados reais com o seed: só com a palavra de confirmação
+      if (b.confirm !== RESET_WORD) throw new ValidationError(`Para restaurar o padrão inicial, envie confirm: "${RESET_WORD}".`);
+      return mutateBento(() => buildSeed());
+    }
 
     const entity = entityOf(b.entity);
     if (entity === "matches") {

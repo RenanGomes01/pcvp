@@ -17,9 +17,12 @@ import { cn } from "@/lib/utils";
 import {
   CalendarDays,
   Check,
+  ChevronDown,
+  Database,
   ExternalLink,
   Eye,
   EyeOff,
+  HardDrive,
   LoaderCircle,
   LogOut,
   MapPin,
@@ -27,6 +30,7 @@ import {
   Plus,
   RotateCcw,
   Swords,
+  TriangleAlert,
   Trophy,
   Users,
   Whistle,
@@ -66,7 +70,11 @@ class ApiError extends Error {
   }
 }
 
-async function api(key: string, method: "GET" | "POST" | "PUT" | "DELETE", payload?: Record<string, unknown>, query?: string): Promise<BentoData> {
+/** Onde o servidor está gravando ("supabase" | "arquivo"), informado em cada resposta do admin. */
+type Storage = string | null;
+type ApiResult = { data: BentoData; storage: Storage };
+
+async function api(key: string, method: "GET" | "POST" | "PUT" | "DELETE", payload?: Record<string, unknown>, query?: string): Promise<ApiResult> {
   const res = await fetch(query ? `${API}?${query}` : API, {
     method,
     headers: { "x-admin-key": key, ...(payload ? { "content-type": "application/json" } : {}) },
@@ -75,14 +83,14 @@ async function api(key: string, method: "GET" | "POST" | "PUT" | "DELETE", paylo
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, json.error ?? `Erro ${res.status}`);
-  return json.raw as BentoData;
+  return { data: json.raw as BentoData, storage: typeof json.storage === "string" ? json.storage : null };
 }
 
 /* -------------------------------------------------------------------------- */
 /*                                    login                                   */
 /* -------------------------------------------------------------------------- */
 
-function Login({ onLogin }: { onLogin: (key: string, data: BentoData) => void }) {
+function Login({ onLogin }: { onLogin: (key: string, result: ApiResult) => void }) {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -381,6 +389,83 @@ function MatchesTab({ data, run }: TabProps) {
 /* -------------------------------------------------------------------------- */
 
 
+/* -------------------------------------------------------------------------- */
+/*                     armazenamento + zona de perigo                         */
+/* -------------------------------------------------------------------------- */
+
+const RESET_WORD = "RESTAURAR";
+
+/** Selo do cabeçalho: mostra se as edições vão para o Supabase ou para o arquivo local. */
+function StorageBadge({ storage }: { storage: Storage }) {
+  if (!storage) return null;
+  const db = storage === "supabase";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1",
+        db ? "bg-emerald-500/10 text-emerald-400 ring-emerald-500/30" : "bg-amber-500/10 text-amber-400 ring-amber-500/30"
+      )}
+      title={db ? "As edições são gravadas no Supabase (tabela pcvp_bento_state)." : "Sem Supabase configurado: as edições vão para data/bento.json (só local)."}
+    >
+      {db ? <Database className="size-3.5" /> : <HardDrive className="size-3.5" />}
+      {db ? "Supabase" : "Arquivo local"}
+    </span>
+  );
+}
+
+/**
+ * "Restaurar padrão inicial" recolhido no rodapé: abre a zona de perigo e
+ * exige digitar RESTAURAR (o servidor confere a mesma palavra).
+ */
+function DangerZone({ onReset, storage }: { onReset: () => Promise<boolean>; storage: Storage }) {
+  const [word, setWord] = useState("");
+  const [running, setRunning] = useState(false);
+  const armed = word.trim() === RESET_WORD;
+  return (
+    <details className="group mt-12 rounded-3xl ring-1 ring-red-500/20 open:bg-red-500/[0.04]">
+      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-3xl px-5 py-4 text-sm font-medium text-red-400 hover:bg-red-500/[0.06] [&::-webkit-details-marker]:hidden">
+        <TriangleAlert className="size-4" /> Zona de perigo
+        <ChevronDown className="ml-auto size-4 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="flex flex-col gap-4 px-5 pb-5">
+        <div>
+          <p className="text-sm font-semibold text-white">Restaurar padrão inicial</p>
+          <p className="mt-1 max-w-2xl text-sm text-neutral-400">
+            Apaga <strong className="text-neutral-200">todas</strong> as conquistas, pódios, jogos, elenco e comissão cadastrados
+            {storage === "supabase" ? " no Supabase" : ""} e volta aos dados de exemplo de <code className="text-neutral-300">config/site.ts</code>. Não dá para desfazer.
+          </p>
+        </div>
+        <form
+          className="flex flex-wrap items-end gap-3"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!armed) return;
+            setRunning(true);
+            const ok = await onReset();
+            setRunning(false);
+            if (ok) setWord("");
+          }}
+        >
+          <Field label={`Digite ${RESET_WORD} para confirmar`}>
+            <input
+              autoCapitalize="characters"
+              autoComplete="off"
+              className={cn(inputCls, "w-56 font-mono tracking-widest")}
+              onChange={(e) => setWord(e.target.value.toUpperCase())}
+              placeholder={RESET_WORD}
+              spellCheck={false}
+              value={word}
+            />
+          </Field>
+          <Btn disabled={!armed || running} type="submit" variant="danger">
+            {running ? <LoaderCircle className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Restaurar padrão inicial
+          </Btn>
+        </form>
+      </div>
+    </details>
+  );
+}
+
 const TABS = [
   { id: "achievements", label: "Conquistas", icon: Trophy },
   { id: "podiums", label: "Pódios do time", icon: Swords },
@@ -397,7 +482,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<TabId>("achievements");
   const [toast, setToast] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [storage, setStorage] = useState<Storage>(null);
 
   const logout = useCallback(() => {
     writeKey(null);
@@ -409,10 +494,11 @@ export default function AdminPage() {
   useEffect(() => {
     const saved = readKey();
     (saved ? api(saved, "GET") : Promise.resolve(null))
-      .then((d) => {
-        if (!saved || !d) return;
+      .then((r) => {
+        if (!saved || !r) return;
         setKey(saved);
-        setData(d);
+        setData(r.data);
+        setStorage(r.storage);
       })
       .catch(() => writeKey(null))
       .finally(() => setBooting(false));
@@ -429,7 +515,9 @@ export default function AdminPage() {
       if (!key) return false;
       setBusy(true);
       try {
-        setData(await api(key, method, payload, query));
+        const r = await api(key, method, payload, query);
+        setData(r.data);
+        setStorage(r.storage);
         setToast({ kind: "ok", text: success });
         return true;
       } catch (err) {
@@ -454,10 +542,11 @@ export default function AdminPage() {
   if (!key || !data) {
     return (
       <Login
-        onLogin={(k, d) => {
+        onLogin={(k, r) => {
           writeKey(k);
           setKey(k);
-          setData(d);
+          setData(r.data);
+          setStorage(r.storage);
         }}
       />
     );
@@ -489,26 +578,7 @@ export default function AdminPage() {
           <a className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm text-neutral-300 hover:bg-white/5 hover:text-white" href={tab === "coaches" ? "/#comissao" : "/#time"} rel="noopener noreferrer" target="_blank">
             Ver no site <ExternalLink className="size-3.5" />
           </a>
-          {confirmReset ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Btn
-                onClick={async () => {
-                  setConfirmReset(false);
-                  await run("Dados restaurados para o padrão inicial", "POST", { action: "reset" });
-                }}
-                variant="danger"
-              >
-                Confirmar restauração
-              </Btn>
-              <Btn aria-label="Cancelar restauração" onClick={() => setConfirmReset(false)} variant="icon">
-                <X className="size-4" />
-              </Btn>
-            </span>
-          ) : (
-            <Btn onClick={() => setConfirmReset(true)} title="Volta tudo (incluindo elenco e comissão) aos dados originais de config/site.ts">
-              <RotateCcw className="size-4" /> <span className="hidden sm:inline">Restaurar padrão inicial</span>
-            </Btn>
-          )}
+          <StorageBadge storage={storage} />
           <Btn aria-label="Sair" onClick={logout} title="Sair" variant="icon">
             <LogOut className="size-4" />
           </Btn>
@@ -548,6 +618,8 @@ export default function AdminPage() {
           {tab === "roster" && <RosterTab data={data} run={run} />}
           {tab === "coaches" && <CoachesTab data={data} run={run} />}
         </section>
+
+        <DangerZone onReset={() => run("Dados restaurados para o padrão inicial", "POST", { action: "reset", confirm: RESET_WORD })} storage={storage} />
       </main>
 
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center px-4">
