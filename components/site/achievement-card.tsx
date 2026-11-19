@@ -1,4 +1,8 @@
+import { isLogoAvatar } from "@/lib/bento";
 import { cn } from "@/lib/utils";
+
+/** Logo do time no avatar redondo: só o símbolo (corta o letreiro de baixo), sobre laranja. */
+export const LOGO_IMG_CLS = "size-full origin-[50%_30%] scale-[1.35] object-contain p-1";
 
 /** Cores das badges de conquista (Home e /admin). */
 export const BADGE_STYLES: Record<string, string> = {
@@ -10,14 +14,20 @@ export const BADGE_STYLES: Record<string, string> = {
 
 /** Cartão compacto do feed de conquistas (foto redonda, atleta, resultado e categoria). */
 export default function AchievementCard({ athlete, photo, title, year, badge }: { athlete: string; photo: string; title: string; year: string; badge: string }) {
+  const logo = isLogoAvatar(photo);
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white/[0.04] p-2.5 ring-1 ring-white/10">
-      <span className="relative size-11 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-brand/30 to-brand-soft/20 ring-1 ring-brand/30">
-        {/* PNG de corpo inteiro: amplia e ancora no rosto */}
+      <span
+        className={cn(
+          "relative size-11 shrink-0 overflow-hidden rounded-full ring-1 ring-brand/30",
+          logo ? "theme-fixed bg-brand" : "bg-gradient-to-br from-brand/30 to-brand-soft/20"
+        )}
+      >
+        {/* PNG de corpo inteiro: amplia e ancora no rosto (a logo do time só centraliza) */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           alt=""
-          className="size-full origin-[50%_14%] scale-[2.3] object-cover object-[50%_0%]"
+          className={logo ? LOGO_IMG_CLS : "size-full origin-[50%_14%] scale-[2.3] object-cover object-[50%_0%]"}
           height={44}
           loading="lazy"
           src={photo}

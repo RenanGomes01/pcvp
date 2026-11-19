@@ -280,14 +280,23 @@ export const athleteToMember = (a: Athlete): TeamMember => ({
 /** Em qual coluna do gráfico uma conquista soma: Estadual → estadual; o resto → nacionalInter. */
 export const podiumFieldFor = (badge: Badge): "estadual" | "nacionalInter" => (badge === "Estadual" ? "estadual" : "nacionalInter");
 
-export type PersonOption = { group: "coach" | "athlete"; name: string; fullName: string; avatar: string };
+export type PersonOption = { group: "team" | "coach" | "athlete"; name: string; fullName: string; avatar: string };
+
+/** Origem "Time / CT (PCVP)": conquistas institucionais e rankings do centro de treinamento. */
+export const TEAM_NAME = "Time PCVP";
+/** Logo branca do PCVP (public/logo.png); nos avatares aparece sobre um círculo laranja. */
+export const TEAM_AVATAR = "/logo.png";
+export const TEAM_OPTION: PersonOption = { group: "team", name: TEAM_NAME, fullName: "PCVP — Time / Centro de Treinamento", avatar: TEAM_AVATAR };
+/** Avatar é uma logo (não um retrato de corpo inteiro)? Muda o enquadramento no card. */
+export const isLogoAvatar = (src: string) => src === "/logo.png" || src === "/logo-black.png";
 
 /**
- * Pessoas do seletor rápido de conquistas do admin: primeiro a comissão técnica
- * (nome do card, ex.: "Paulo Coelho"), depois o elenco (primeiro nome). Inclui
- * ocultos do site; só fica de fora quem não tem foto.
+ * Origens do seletor rápido de conquistas do admin: o Time / CT (PCVP), a
+ * comissão técnica (nome do card, ex.: "Paulo Coelho") e o elenco (primeiro
+ * nome). Inclui ocultos do site; só fica de fora quem não tem foto.
  */
 export const athleteOptions = (athletes: Athlete[], coaches: CoachRecord[] = []): PersonOption[] => [
+  TEAM_OPTION,
   ...[...coaches]
     .sort(byOrder)
     .filter((c) => c.image)
@@ -501,8 +510,10 @@ export function parseBentoData(v: unknown): BentoData {
 export const ACHIEVEMENT_KINDS = ["Campeão", "Vice-Campeão", "3º Lugar", "Convocação Seleção", "Título Geral / Ranking"] as const;
 export type AchievementKind = (typeof ACHIEVEMENT_KINDS)[number];
 
-export const CATEGORIES = ["Sub-15", "Sub-17", "Sub-19", "Sub-21", "Base", "Adulto", "Universitário"] as const;
+export const CATEGORIES = ["Sub-15", "Sub-17", "Sub-19", "Sub-21", "Base", "Adulto", "Universitário", "Geral", "Masculino", "Feminino"] as const;
 export type Category = (typeof CATEGORIES)[number];
+/** Categorias de ranking/institucionais (chips extras quando a origem é o Time / CT). */
+export const TEAM_CATEGORIES: readonly Category[] = ["Geral", "Masculino", "Feminino"];
 
 /** Gênero gramatical do texto gerado (m: Campeão · f: Campeã · n: Campeão(ã)). */
 export const TEXT_GENDERS = ["m", "f", "n"] as const;
@@ -534,8 +545,14 @@ export const TOURNAMENTS = [
     prefix: g("Brasileiro Universitário", "Brasileira Universitária", "Brasileiro(a) Universitário(a)"),
     suffix: "CBDU",
   },
+  // rankings / marcos do time: frase por colocação ("1º Lugar no Ranking Brasileiro ABRTVP")
+  { id: "abrtvp", label: "Ranking ABRTVP", badge: "Nacional", prefix: same("no Ranking Brasileiro ABRTVP"), suffix: "" },
+  { id: "ct", label: "Centro de Treinamento", badge: "Nacional", prefix: same("entre Centros de Treinamento"), suffix: "" },
 ] as const satisfies readonly { id: string; label: string; badge: Badge; prefix: Gendered; suffix: string }[];
 export type TournamentId = (typeof TOURNAMENTS)[number]["id"];
+/** Entradas de ranking (frase por colocação); aparecem primeiro quando a origem é o Time / CT. */
+export const TEAM_TOURNAMENTS: readonly TournamentId[] = ["abrtvp", "ct"];
+const isRanking = (id: TournamentId | "") => id !== "" && TEAM_TOURNAMENTS.includes(id);
 
 export type AchievementBuilder = {
   kind: AchievementKind;
@@ -592,12 +609,21 @@ export function kindPhrase(kind: AchievementKind, count: number, gender: TextGen
   }
 }
 
+/** Colocação para rankings: Campeão / Título Geral → 1º, Vice → 2º, 3º → 3º. */
+const PLACE: Partial<Record<AchievementKind, string>> = { Campeão: "1º Lugar", "Título Geral / Ranking": "1º Lugar", "Vice-Campeão": "2º Lugar", "3º Lugar": "3º Lugar" };
+
 /** Frase final no padrão do site. */
 export function buildAchievementText(b: AchievementBuilder) {
-  const head = kindPhrase(b.kind, b.count, b.gender);
   const cats = joinPt(sortCategories(b.categories));
   const period = normalizePeriod(b.period);
   const t = TOURNAMENTS.find((x) => x.id === b.tournament);
+  const place = PLACE[b.kind];
+  if (t && isRanking(t.id) && place) {
+    // "1º Lugar no Ranking Brasileiro ABRTVP (Geral, Masculino e Feminino · 2025)"
+    const extra = [cats, period].filter(Boolean).join(" · ");
+    return `${b.count > 1 ? `${b.count}x ` : ""}${place} ${t.prefix[b.gender]}` + (extra ? ` (${extra})` : "");
+  }
+  const head = kindPhrase(b.kind, b.count, b.gender);
   if (t?.id === "selecao") {
     // "3x Convocado(a) Seleção Brasileira (Sub-19 e Sub-21 · 2026–2027)"
     const extra = [cats, period].filter(Boolean).join(" · ");
@@ -643,7 +669,7 @@ export function guessBuilder(a: Pick<Achievement, "text" | "badge" | "year">): A
   const kind: AchievementKind =
     /convoca|seleção brasileira/i.test(t) || a.badge === "Seleção"
       ? "Convocação Seleção"
-      : /vice/i.test(t)
+      : /vice|2º lugar/i.test(t)
         ? "Vice-Campeão"
         : /3º|terceir/i.test(t)
           ? "3º Lugar"
@@ -664,12 +690,15 @@ export function guessBuilder(a: Pick<Achievement, "text" | "badge" | "year">): A
     ["fisu", /fisu|pan-?americ/i],
     ["sulamericano", /sul-?americ/i],
     ["mundial", /mundial/i],
+    ["abrtvp", /abrtvp|ranking brasileiro/i],
+    ["ct", /centros? de treinamento/i],
     ["cbvp", /cbvp|brasileir/i],
   ];
   const hits = patterns.map(([id, re]) => [id, t.search(re)] as const).filter(([, i]) => i >= 0);
   const firstHit = hits.length ? hits.reduce((a, b) => (b[1] < a[1] ? b : a))[0] : "";
   const tournament: TournamentId | "" = kind === "Convocação Seleção" ? "selecao" : firstHit;
-  const categories = CATEGORIES.filter((c) => new RegExp(`\\b${c}\\b`, "i").test(t));
+  // Geral/Masculino/Feminino só contam como categoria em rankings ("Campeão Brasileiro Geral" é tipo, não categoria)
+  const categories = CATEGORIES.filter((c) => (isRanking(tournament) || !TEAM_CATEGORIES.includes(c)) && new RegExp(`\\b${c}\\b`, "i").test(t));
   const range = /(\d{4})\s*[–-]\s*(\d{4})/.exec(t);
   const single = /\b(20\d{2})\b/.exec(t);
   const period = range ? `${range[1]}–${range[2]}` : (single?.[1] ?? a.year ?? "");

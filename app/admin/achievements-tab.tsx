@@ -21,10 +21,13 @@ import {
   countsAsPodium,
   emptyBuilder,
   guessBuilder,
+  isLogoAvatar,
   isValidPeriod,
   normalizePeriod,
   periodEndYear,
   podiumFieldFor,
+  TEAM_CATEGORIES,
+  TEAM_TOURNAMENTS,
   TOURNAMENTS,
   type Achievement,
   type AchievementBuilder,
@@ -105,10 +108,16 @@ const GENDERS: { id: TextGender; label: string }[] = [
 /*                              construtor padrão                             */
 /* -------------------------------------------------------------------------- */
 
-function BuilderPanel({ b, onChange }: { b: AchievementBuilder; onChange: (patch: Partial<AchievementBuilder>) => void }) {
+function BuilderPanel({ b, team, onChange }: { b: AchievementBuilder; team: boolean; onChange: (patch: Partial<AchievementBuilder>) => void }) {
   const [periodRaw, setPeriodRaw] = useState(b.period);
   const periodOk = isValidPeriod(periodRaw);
   const toggleCat = (c: Category) => onChange({ categories: b.categories.includes(c) ? b.categories.filter((x) => x !== c) : [...b.categories, c] });
+  // chips de ranking/institucionais: só para o Time / CT (ou se já estiverem marcados)
+  const isTeamT = (id: string) => (TEAM_TOURNAMENTS as readonly string[]).includes(id);
+  const tournaments = team
+    ? [...TOURNAMENTS.filter((t) => isTeamT(t.id)), ...TOURNAMENTS.filter((t) => !isTeamT(t.id))]
+    : TOURNAMENTS.filter((t) => !isTeamT(t.id) || b.tournament === t.id);
+  const categories = CATEGORIES.filter((c) => team || !TEAM_CATEGORIES.includes(c) || b.categories.includes(c));
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -141,7 +150,7 @@ function BuilderPanel({ b, onChange }: { b: AchievementBuilder; onChange: (patch
       </ChipRow>
 
       <ChipRow label="Torneio / entidade">
-        {TOURNAMENTS.map((t) => (
+        {tournaments.map((t) => (
           <Chip key={t.id} onClick={() => onChange({ tournament: b.tournament === t.id ? "" : t.id })} selected={b.tournament === t.id}>
             {t.label}
           </Chip>
@@ -149,7 +158,7 @@ function BuilderPanel({ b, onChange }: { b: AchievementBuilder; onChange: (patch
       </ChipRow>
 
       <ChipRow label="Categoria (uma ou mais)">
-        {CATEGORIES.map((c) => (
+        {categories.map((c) => (
           <Chip key={c} onClick={() => toggleCat(c)} selected={b.categories.includes(c)}>
             {c}
           </Chip>
@@ -232,6 +241,8 @@ function AchievementForm({ editing, initial, all, options, onSubmit, onCancel, o
   const pickedIndex = options.findIndex((a) => a.avatar === d.avatar && a.name === d.athleteName);
   const picked = pickedIndex < 0 ? "" : String(pickedIndex);
   const coachOptions = options.filter((o) => o.group === "coach");
+  // origem Time / CT (PCVP): pela opção escolhida ou pela logo como avatar (o nome é editável)
+  const isTeam = options[pickedIndex]?.group === "team" || isLogoAvatar(d.avatar);
 
   /** Aplica uma mudança no construtor e propaga texto, badge e ano. */
   const applyBuilder = (next: AchievementBuilder, keepManual = manualText) => {
@@ -302,18 +313,26 @@ function AchievementForm({ editing, initial, all, options, onSubmit, onCancel, o
       )}
 
       {/* atleta ou treinador */}
-      <Field hint="Preenche nome e foto automaticamente (comissão técnica no topo)." label="Atleta ou treinador">
+      <Field hint="Preenche nome e foto automaticamente (Time / CT e comissão técnica no topo)." label="Origem: time, treinador ou atleta">
         <select
           className={inputCls}
           onChange={(e) => {
             const a = e.target.value === "" ? undefined : options[Number(e.target.value)];
-            if (a) setD((x) => ({ ...x, athleteName: a.name, avatar: a.avatar }));
+            if (!a) return;
+            setD((x) => ({ ...x, athleteName: a.name, avatar: a.avatar }));
+            if (a.group === "team") {
+              // marcos do time não somam no gráfico por padrão
+              setAddToPodium(false);
+              // construtor ainda intocado numa conquista nova: já começa no ranking ABRTVP
+              const pristine = buildAchievementText(b) === buildAchievementText(emptyBuilder()) && !b.period;
+              if (isNew && useBuilder && pristine) updateBuilder({ kind: "Título Geral / Ranking", tournament: "abrtvp", categories: ["Geral"], gender: "m" });
+            }
           }}
           value={picked}
         >
           <option value="">Personalizado…</option>
-          {(["coach", "athlete"] as const).map((group) => (
-            <optgroup key={group} label={group === "coach" ? "Comissão técnica" : "Elenco"}>
+          {(["team", "coach", "athlete"] as const).map((group) => (
+            <optgroup key={group} label={{ team: "Time / CT (PCVP)", coach: "Comissão técnica", athlete: "Elenco" }[group]}>
               {options.map((a, i) =>
                 a.group === group ? (
                   <option key={`${group}-${i}`} value={i}>
@@ -395,7 +414,7 @@ function AchievementForm({ editing, initial, all, options, onSubmit, onCancel, o
           )}
         </div>
         {useBuilder ? (
-          <BuilderPanel b={b} onChange={updateBuilder} />
+          <BuilderPanel b={b} onChange={updateBuilder} team={isTeam} />
         ) : (
           <p className="text-xs text-neutral-400">
             Modo texto livre. “Usar construtor” deduz os campos a partir do texto atual para padronizá-lo.
@@ -496,7 +515,12 @@ function AchievementForm({ editing, initial, all, options, onSubmit, onCancel, o
           />
           <span>
             Somar +1 automaticamente no gráfico de Pódios do ano correspondente
-            {podiumAllowed ? (
+            {podiumAllowed && isTeam ? (
+              <span className="mt-0.5 block text-xs text-neutral-400">
+                Conquista do Time / CT: rankings e marcos institucionais não entram como pódio avulso no gráfico de areia. Marque só se este resultado
+                for mesmo um pódio novo do time (vai somar em <strong className="text-brand">{field}</strong> de {d.year || "—"}).
+              </span>
+            ) : podiumAllowed ? (
               <span className="mt-0.5 block text-xs text-neutral-400">
                 Vai somar em <strong className="text-brand">{field}</strong> de {d.year || "—"} (cria o ano se ainda não existir).
                 {isMerge && " Marque se este acúmulo é um pódio novo."}

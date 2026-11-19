@@ -2,8 +2,8 @@
 
 /** Primitivos visuais e tipos compartilhados do painel /admin. */
 
-import { BADGE_STYLES } from "@/components/site/achievement-card";
-import type { BentoData } from "@/lib/bento";
+import { BADGE_STYLES, LOGO_IMG_CLS } from "@/components/site/achievement-card";
+import { isLogoAvatar, type BentoData } from "@/lib/bento";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ArrowDown, ArrowUp, Check, Eye, ImageOff, LoaderCircle, Lock, Trash2 } from "lucide-react";
@@ -86,11 +86,18 @@ export function MoveButtons({ index, length, onMove, label }: { index: number; l
 }
 
 export function Avatar({ src, className }: { src: string; className?: string }) {
+  const logo = isLogoAvatar(src);
   return (
-    <span className={cn("relative size-11 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-brand/30 to-brand-soft/20 ring-1 ring-brand/30", className)}>
+    <span
+      className={cn(
+        "relative size-11 shrink-0 overflow-hidden rounded-full ring-1 ring-brand/30",
+        logo ? "theme-fixed bg-brand" : "bg-gradient-to-br from-brand/30 to-brand-soft/20",
+        className
+      )}
+    >
       {src && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img alt="" className="size-full origin-[50%_14%] scale-[2.3] object-cover object-[50%_0%]" src={src} />
+        <img alt="" className={logo ? LOGO_IMG_CLS : "size-full origin-[50%_14%] scale-[2.3] object-cover object-[50%_0%]"} src={src} />
       )}
     </span>
   );
