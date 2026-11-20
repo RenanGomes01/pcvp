@@ -73,13 +73,14 @@ export default function GallerySection() {
       {/*
         Altura reduzida = "rota de fuga": a página acima e abaixo do túnel
         continua visível, então sempre há área fora da galeria para rolar.
-        Mobile: 60svh deixa ~40% da tela livre para o dedo; e, de qualquer
-        forma, o arraste vertical no túnel rola a página (touch-pan-y).
+        Mobile: 78svh (mín. 520px) deixa o túnel alongado na vertical, e
+        ainda sobra borda da página acima/abaixo; de qualquer forma, o
+        arraste vertical no túnel rola a página (touch-pan-y).
       */}
       <ShuffledGallery
         ariaLabel={gallery.ariaLabel}
         backgroundColor="#0a0a0a"
-        className="theme-fixed h-[60svh] min-h-[380px] w-full sm:h-[70vh] sm:min-h-[500px] lg:max-h-[760px]"
+        className="theme-fixed h-[78svh] min-h-[520px] w-full sm:h-[70vh] sm:min-h-[500px] lg:max-h-[760px]"
         colors={["#ff6600", "#ffb703"]}
         items={items}
       >

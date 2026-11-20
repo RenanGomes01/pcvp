@@ -299,6 +299,7 @@ export const siteConfig = {
           },
         ],
         instagramLabel: "Paulo Coelho - Técnico",
+        instagramUrl: "https://www.instagram.com/paulocoelhovolei/",
       },
       {
         name: "Marisléa Coelho",
@@ -884,7 +885,7 @@ export const siteConfig = {
       {
         title: "Social",
         links: [
-          { label: "Instagram", href: "#" },
+          { label: "Instagram", href: "https://www.instagram.com/paulocoelhovolei/" },
           { label: "YouTube", href: "#" },
           { label: "WhatsApp", href: "https://wa.me/5565999826809" },
         ],
