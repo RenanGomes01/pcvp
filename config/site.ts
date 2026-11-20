@@ -6,6 +6,8 @@
  * ⚠️ Os números, nomes e datas abaixo são PLACEHOLDERS.
  */
 
+import type { HoverPreviewTarget } from "@/components/ui/hover-preview";
+
 export type NavItem = {
   label: string;
   href: string;
@@ -119,6 +121,13 @@ export type InfoItem = {
   title: string;
   description: string;
   tag?: string;
+  /**
+   * Termos da `description` que mostram uma foto ao passar o mouse
+   * (HoverPreview). `text` precisa aparecer igual na descrição; `image` é o
+   * caminho em `public/` — troque aqui para mudar a foto. Opcionais: `rotate`
+   * (graus), `offsetX`/`offsetY` (px do cursor), `width`, `radius`, `shadow`.
+   */
+  previews?: HoverPreviewTarget[];
 };
 
 export type NavGroup = {
@@ -294,18 +303,30 @@ export const siteConfig = {
         title: "Pódio Internacional e Mundial",
         description:
           "O atleta Felippe Prudêncio (\"Lippe\") sagrou-se Campeão Sul-Americano Sub-18 pela Seleção Brasileira e conquistou o 9º lugar no Campeonato Mundial Sub-18 em Doha, no Catar.",
+        previews: [{ text: 'Felippe Prudêncio ("Lippe")', image: "/gallery/lippe.png", alt: "Felippe Prudêncio, o Lippe", rotate: -5 }],
       },
       {
         icon: "trophy",
         title: "Títulos Brasileiros na Base",
         description:
           "Murilo Santos Rocha e Felippe Prudêncio conquistaram o título geral do Campeonato Brasileiro Interclubes (CBI) Sub-21, somando-se a títulos nacionais nas categorias Sub-17, Sub-19 e etapas do Circuito Brasileiro Sub-21.",
+        previews: [
+          {
+            text: "Campeonato Brasileiro Interclubes (CBI) Sub-21",
+            image: "/gallery/podio-cbi.png",
+            alt: "Pódio do CBI Sub-21 com a faixa do PCVP",
+            rotate: 4,
+          },
+        ],
       },
       {
         icon: "graduation",
         title: "Destaque no Esporte Universitário",
         description:
           "A atleta Larissa Vasconcelos garantiu a vaga ao se sagrar campeã brasileira e, na sequência, conquistou o título de Campeã Sul-Americana Universitária (FISU).",
+        previews: [
+          { text: "Larissa Vasconcelos", image: "/gallery/larissa-quartas-brasileiro.png", alt: "Larissa Vasconcelos em quadra", rotate: -4 },
+        ],
       },
       {
         icon: "medal",

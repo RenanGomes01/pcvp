@@ -6,6 +6,7 @@ import AnimatedList from "@/components/ui/animated-list";
 import BlurHighlight from "@/components/ui/blur-highlight";
 import InteractiveSchedule from "@/components/ui/interactive-schedule";
 import ParticleChart from "@/components/ui/particle-chart";
+import HoverPreview from "@/components/ui/hover-preview";
 import ParticleText from "@/components/ui/particle-text";
 import Pipeline from "@/components/ui/pipeline";
 import { siteConfig } from "@/config/site";
@@ -125,6 +126,22 @@ const INFO_ICONS: Record<InfoItem["icon"], typeof Trophy> = {
   heart: HeartPulse,
 };
 
+/** Troca cada termo de `previews` (1ª ocorrência na descrição) por `{i}` para o HoverPreview. */
+function withPreviews(description: string, previews: NonNullable<InfoItem["previews"]>) {
+  let content = description.replace(/[{}]/g, "");
+  const targets = previews.filter((p) => {
+    if (!content.includes(p.text)) {
+      if (process.env.NODE_ENV !== "production") console.warn(`[conquistas] termo não encontrado na descrição: "${p.text}"`);
+      return false;
+    }
+    return true;
+  });
+  targets.forEach((p, i) => {
+    content = content.replace(p.text, `{${i}}`);
+  });
+  return { content, targets };
+}
+
 function InfoCard({ item, featured }: { item: InfoItem; featured?: boolean }) {
   const Icon = INFO_ICONS[item.icon];
   return (
@@ -138,7 +155,9 @@ function InfoCard({ item, featured }: { item: InfoItem; featured?: boolean }) {
         )}
       </div>
       <h3 className={cn("font-semibold text-white", featured ? "text-2xl sm:text-3xl" : "text-xl")}>{item.title}</h3>
-      <p className={cn("mt-2 text-neutral-400", featured && "sm:text-lg")}>{item.description}</p>
+      <p className={cn("mt-2 text-neutral-400", featured && "sm:text-lg")}>
+        {item.previews?.length ? <HoverPreview {...withPreviews(item.description, item.previews)} /> : item.description}
+      </p>
     </Card>
   );
 }
