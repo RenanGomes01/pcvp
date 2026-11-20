@@ -5,7 +5,7 @@ import GuidesSection from "@/components/site/guides-section";
 import Hero from "@/components/site/hero";
 import Navbar, { ScreenFrame } from "@/components/site/navbar";
 import PricingSection from "@/components/site/pricing-section";
-import { Bento, Footer, ParticleShowcase, ScheduleSection, Statement, Steps } from "@/components/site/sections";
+import { Bento, Footer, Modalities, ParticleShowcase, Results, ScheduleSection, Sponsorship, Statement, Steps } from "@/components/site/sections";
 import { getBentoView } from "@/lib/bento-store";
 
 /** Dados dinâmicos (editáveis em /admin). Cacheados com a tag "bento": cada edição expira o cache. */
@@ -32,13 +32,16 @@ export default function Home() {
         <Hero />
         <Statement />
         <CoachesWithData />
+        <Results />
         <BentoWithData />
+        <Modalities />
         <ScheduleSection />
         <PricingSection />
         <ParticleShowcase />
         <Steps />
         <GallerySection />
         <GuidesSection />
+        <Sponsorship />
         <CallToAction />
       </main>
       <Footer />

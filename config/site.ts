@@ -113,6 +113,14 @@ export type ScheduleSession = {
   court?: string;
 };
 
+/** Card de texto com ícone (conquistas e modalidades). `icon` = chave em ICONS do componente. */
+export type InfoItem = {
+  icon: "globe" | "trophy" | "graduation" | "medal" | "flag" | "sprout" | "heart";
+  title: string;
+  description: string;
+  tag?: string;
+};
+
 export type NavGroup = {
   label: string;
   items: NavItem[];
@@ -131,16 +139,18 @@ export const siteConfig = {
       {
         label: "O Time",
         items: [
+          { label: "Quem somos", href: "#sobre", description: "A história e o propósito do CT" },
           { label: "Comissão Técnica", href: "#comissao", description: "Os treinadores e fundadores do PCVP" },
           { label: "Atletas", href: "#time", description: "Conheça quem joga com a gente" },
           { label: "Estatísticas", href: "#time", description: "Números da temporada" },
-          { label: "Conquistas", href: "#time", description: "Títulos e pódios" },
+          { label: "Conquistas", href: "#conquistas", description: "Títulos e pódios" },
         ],
       },
       {
         label: "Temporada",
         items: [
           { label: "Próximos jogos", href: "#time", description: "Calendário de torneios" },
+          { label: "Modalidades", href: "#modalidades", description: "Base, alto rendimento e funcional" },
           { label: "Horários", href: "#horarios", description: "Grade semanal de treinos" },
           { label: "Treinos", href: "#treinos", description: "Como funciona a rotina" },
         ],
@@ -237,10 +247,26 @@ export const siteConfig = {
     { name: "SECEL · Governo de Mato Grosso", logo: "/patrocinio/secel.png", width: 667, height: 180 },
   ],
 
+  /** "Sobre nós": logo abaixo da faixa de patrocinadores. */
   statement: {
-    text: "Modernas equipes utilizam nossa metodologia para elevar cada fundamento, misturando condicionamento físico intensivo com leitura de jogo em um sistema unificado que impulsiona a evolução contínua em cada set.",
-    /** Frases que ganham foco no efeito de desfoque de destaque (iguais ao texto). */
-    highlights: ["elevar cada fundamento", "condicionamento físico intensivo com leitura de jogo", "evolução contínua em cada set"],
+    eyebrow: "Quem somos",
+    /**
+     * Parágrafos com desfoque de destaque. `highlights` = trechos (iguais ao
+     * texto) que ganham foco. O 1º parágrafo é o maior; os demais, de apoio.
+     */
+    paragraphs: [
+      {
+        text: "O Centro de Treinamento Paulo Coelho Vôlei de Praia (PCVP) nasceu em Cuiabá (MT) com um propósito claro: transformar talento e disciplina em resultados de excelência. Sob o comando técnico de Paulo Coelho, o projeto une metodologia moderna, preparação física específica e acompanhamento próximo para desenvolver atletas em todas as fases da carreira.",
+        highlights: [
+          "transformar talento e disciplina em resultados de excelência",
+          "metodologia moderna, preparação física específica e acompanhamento próximo",
+        ],
+      },
+      {
+        text: "Hoje, o PCVP é reconhecido como um dos principais polos formadores do Centro-Oeste, revelando talentos que conquistam pódios estaduais, títulos no Campeonato Brasileiro Interclubes (CBI) e convocações para a Seleção Brasileira de base.",
+        highlights: ["um dos principais polos formadores do Centro-Oeste", "convocações para a Seleção Brasileira de base"],
+      },
+    ],
     /** Jornada do atleta no CT, exibida como pipeline logo abaixo do manifesto. */
     pipeline: {
       label: "Jornada do atleta no CT",
@@ -254,6 +280,46 @@ export const siteConfig = {
         { title: "Alto Rendimento", subtitle: "CBVP Nacional & Seleção" },
       ],
     },
+  },
+
+  /** Destaques de resultados (antes do bloco "O time", que traz o feed e os números). */
+  results: {
+    eyebrow: "Conquistas",
+    title: "Nossas conquistas e resultados expressivos",
+    description:
+      "O trabalho desenvolvido no Paulo Coelho Vôlei de Praia (PCVP) coloca Cuiabá e Mato Grosso em destaque nos principais pódios do Brasil e do mundo:",
+    items: [
+      {
+        icon: "globe",
+        title: "Pódio Internacional e Mundial",
+        description:
+          "O atleta Felippe Prudêncio (\"Lippe\") sagrou-se Campeão Sul-Americano Sub-18 pela Seleção Brasileira e conquistou o 9º lugar no Campeonato Mundial Sub-18 em Doha, no Catar.",
+      },
+      {
+        icon: "trophy",
+        title: "Títulos Brasileiros na Base",
+        description:
+          "Murilo Santos Rocha e Felippe Prudêncio conquistaram o título geral do Campeonato Brasileiro Interclubes (CBI) Sub-21, somando-se a títulos nacionais nas categorias Sub-17, Sub-19 e etapas do Circuito Brasileiro Sub-21.",
+      },
+      {
+        icon: "graduation",
+        title: "Destaque no Esporte Universitário",
+        description:
+          "A atleta Larissa Vasconcelos conquistou o título de Campeã Sul-Americana Universitária (FISU), além de representar o Brasil em competições sul-americanas de base.",
+      },
+      {
+        icon: "medal",
+        title: "Elite do Vôlei de Praia Nacional",
+        description:
+          "Presença constante de duplas masculinas e femininas do centro nas quartas de final do Circuito Brasileiro Adulto, enfrentando as principais equipes do país.",
+      },
+      {
+        icon: "flag",
+        title: "Formação de Seleção Brasileira",
+        description:
+          "Convocações recorrentes de atletas e da comissão técnica para períodos de treinamento e competições oficiais pela Confederação Brasileira de Voleibol (CBV).",
+      },
+    ] satisfies InfoItem[],
   },
 
   /** Comissão técnica: os fundadores e treinadores do PCVP. */
@@ -722,6 +788,35 @@ export const siteConfig = {
    * e treino avançado/físico no sábado de manhã.
    * Sessões com o mesmo dia/início/fim aparecem lado a lado (use `court` para diferenciar).
    */
+  /** Modalidades e turmas (antes da grade de horários e dos planos). */
+  modalities: {
+    eyebrow: "Modalidades",
+    title: "Modalidades e turmas",
+    items: [
+      {
+        icon: "sprout",
+        title: "Iniciação e Base",
+        tag: "Sub-15 ao Sub-21",
+        description:
+          "Foco nos fundamentos técnicos, coordenação motora, leitura de jogo e formação competitiva para jovens atletas que sonham em disputar torneios oficiais.",
+      },
+      {
+        icon: "trophy",
+        title: "Alto Rendimento e Adulto",
+        tag: "Competição",
+        description:
+          "Treinamento intensivo voltado para duplas que disputam circuitos estaduais, etapas do Circuito Brasileiro e competições universitárias (CBDU).",
+      },
+      {
+        icon: "heart",
+        title: "Treinamento Funcional e Qualidade de Vida",
+        tag: "Saúde & bem-estar",
+        description:
+          "Aulas dinâmicas para quem busca condicionamento físico, saúde e evolução técnica no esporte em um ambiente acolhedor e motivador.",
+      },
+    ] satisfies InfoItem[],
+  },
+
   schedule: {
     eyebrow: "Horários",
     title: "Grade de treinos",
@@ -857,6 +952,23 @@ export const siteConfig = {
     ],
   },
 
+  /** Seja um patrocinador / apoiador (antes do CTA final). */
+  sponsorship: {
+    eyebrow: "Patrocínio",
+    title: "Seja um patrocinador / apoiador",
+    description:
+      "Investir no Paulo Coelho Vôlei de Praia é associar a sua marca a uma equipe vencedora, com visibilidade em competições estaduais e nacionais e forte engajamento nas redes sociais.",
+    benefits: [
+      "Exposição da marca em uniformes de jogo, treino e viagem em todo o Brasil.",
+      "Presença nas publicações, vídeos e coberturas de etapas nas redes sociais oficiais.",
+      "Impacto social direto no incentivo ao esporte e na formação de jovens atletas mato-grossenses.",
+    ],
+    cta: {
+      label: "Quero patrocinar",
+      href: "https://wa.me/5565999826809?text=Ol%C3%A1!%20Vim%20pelo%20site%20do%20PCVP%20e%20gostaria%20de%20conversar%20sobre%20patroc%C3%ADnio%20e%20parcerias.",
+    },
+  },
+
   cta: {
     title: "Vocês estão preparados para uma nova experiência no Vôlei de Praia?",
     description: "Treinos abertos para novos atletas. Mande uma mensagem e venha conhecer o time.",
@@ -879,7 +991,7 @@ export const siteConfig = {
         links: [
           { label: "Atletas", href: "#time" },
           { label: "Próximos jogos", href: "#time" },
-          { label: "Patrocínio", href: "https://wa.me/5565999826809?text=Ol%C3%A1!%20Vim%20pelo%20site%20do%20PCVP%20e%20gostaria%20de%20conversar%20sobre%20patroc%C3%ADnio%20e%20parcerias." },
+          { label: "Patrocínio", href: "#patrocinio" },
         ],
       },
       {

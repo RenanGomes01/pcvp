@@ -11,7 +11,24 @@ import Pipeline from "@/components/ui/pipeline";
 import { siteConfig } from "@/config/site";
 import { athleteToMember, type BentoView } from "@/lib/bento";
 import { cn, externalLinkProps } from "@/lib/utils";
-import { CalendarDays, Dumbbell, Flame, MapPin, Swords, Trophy } from "lucide-react";
+import { CtaButton } from "@/components/site/navbar";
+import type { InfoItem } from "@/config/site";
+import {
+  CalendarDays,
+  Check,
+  Dumbbell,
+  Flag,
+  Flame,
+  Globe,
+  GraduationCap,
+  Handshake,
+  HeartPulse,
+  MapPin,
+  Medal,
+  Sprout,
+  Swords,
+  Trophy,
+} from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
@@ -56,18 +73,32 @@ export function Statement() {
   const [active, setActive] = useState(false);
   return (
     <section
-      className="mx-auto w-full max-w-[1680px] px-5 sm:px-8 lg:px-12 xl:px-16 pt-40 pb-28 sm:pt-56 sm:pb-40"
+      aria-labelledby="sobre-titulo"
+      className="mx-auto w-full max-w-[1680px] scroll-mt-24 px-5 sm:px-8 lg:px-12 xl:px-16 pt-40 pb-28 sm:pt-56 sm:pb-40"
+      id="sobre"
       onBlur={() => setActive(false)}
       onFocus={() => setActive(true)}
       onPointerEnter={() => setActive(true)}
       onPointerLeave={() => setActive(false)}
     >
-      <BlurHighlight
-        active={active}
-        className="mx-auto max-w-5xl text-3xl leading-tight font-medium text-white sm:text-5xl"
-        highlights={statement.highlights}
-        text={statement.text}
-      />
+      <div className="mx-auto max-w-5xl">
+        <h2 className="mb-6 text-xs font-medium tracking-[0.3em] text-brand uppercase" id="sobre-titulo">
+          {statement.eyebrow}
+        </h2>
+        {statement.paragraphs.map((p, i) => (
+          <BlurHighlight
+            active={active}
+            className={cn(
+              "font-medium text-white",
+              // 1º parágrafo em destaque; os seguintes menores, como apoio
+              i === 0 ? "text-2xl leading-snug sm:text-4xl sm:leading-tight" : "mt-8 text-lg leading-relaxed text-neutral-300 sm:mt-10 sm:text-2xl"
+            )}
+            highlights={p.highlights}
+            key={p.text}
+            text={p.text}
+          />
+        ))}
+      </div>
       {/* jornada do atleta: da base aos dois destinos competitivos */}
       <Reveal className="mt-16 sm:mt-24">
         <Pipeline
@@ -75,6 +106,114 @@ export function Statement() {
           outcomes={statement.pipeline.outcomes}
           steps={statement.pipeline.steps}
         />
+      </Reveal>
+    </section>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*              cards de texto: conquistas em destaque e modalidades          */
+/* -------------------------------------------------------------------------- */
+
+const INFO_ICONS: Record<InfoItem["icon"], typeof Trophy> = {
+  globe: Globe,
+  trophy: Trophy,
+  graduation: GraduationCap,
+  medal: Medal,
+  flag: Flag,
+  sprout: Sprout,
+  heart: HeartPulse,
+};
+
+function InfoCard({ item, featured }: { item: InfoItem; featured?: boolean }) {
+  const Icon = INFO_ICONS[item.icon];
+  return (
+    <Card className={cn("flex flex-col", featured ? "bg-gradient-to-br from-neutral-900 to-neutral-950" : "bg-neutral-900")}>
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/5 text-brand">
+          <Icon aria-hidden className="size-5" />
+        </span>
+        {item.tag && (
+          <span className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] font-semibold text-brand">{item.tag}</span>
+        )}
+      </div>
+      <h3 className={cn("font-semibold text-white", featured ? "text-2xl sm:text-3xl" : "text-xl")}>{item.title}</h3>
+      <p className={cn("mt-2 text-neutral-400", featured && "sm:text-lg")}>{item.description}</p>
+    </Card>
+  );
+}
+
+/** Conquistas em destaque: 1º card maior (internacional) + demais na grade. */
+export function Results() {
+  const { results } = siteConfig;
+  return (
+    <section className="mx-auto w-full max-w-[1680px] scroll-mt-24 px-5 sm:px-8 lg:px-12 xl:px-16 py-20 sm:py-28" id="conquistas">
+      <Reveal className="mb-12 max-w-3xl">
+        <Eyebrow>{results.eyebrow}</Eyebrow>
+        <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{results.title}</h2>
+        <p className="mt-4 text-neutral-400">{results.description}</p>
+      </Reveal>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {results.items.map((item, i) => (
+          <Reveal className={cn(i === 0 && "md:col-span-2")} delay={(i % 3) * 0.08} key={item.title}>
+            <InfoCard featured={i === 0} item={item} />
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Modalidades e turmas: 3 cards antes da grade de horários. */
+export function Modalities() {
+  const { modalities } = siteConfig;
+  return (
+    <section className="mx-auto w-full max-w-[1680px] scroll-mt-24 px-5 sm:px-8 lg:px-12 xl:px-16 pb-20 sm:pb-28" id="modalidades">
+      <Reveal className="mb-10 max-w-2xl">
+        <Eyebrow>{modalities.eyebrow}</Eyebrow>
+        <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{modalities.title}</h2>
+      </Reveal>
+      <div className="grid gap-4 md:grid-cols-3">
+        {modalities.items.map((item, i) => (
+          <Reveal delay={i * 0.08} key={item.title}>
+            <InfoCard item={item} />
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** Seja patrocinador: texto + benefícios + WhatsApp, antes do CTA final. */
+export function Sponsorship() {
+  const { sponsorship } = siteConfig;
+  return (
+    <section className="mx-auto w-full max-w-[1680px] scroll-mt-24 px-5 sm:px-8 lg:px-12 xl:px-16 pt-20 sm:pt-28" id="patrocinio">
+      <Reveal>
+        <div className="grid gap-10 rounded-[2rem] bg-neutral-900 p-7 ring-1 ring-white/10 sm:p-10 lg:grid-cols-[1.1fr_1fr] lg:gap-16 lg:p-14">
+          <div>
+            <span className="mb-5 grid size-10 place-items-center rounded-xl bg-white/5 text-brand">
+              <Handshake aria-hidden className="size-5" />
+            </span>
+            <Eyebrow>{sponsorship.eyebrow}</Eyebrow>
+            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{sponsorship.title}</h2>
+            <p className="mt-4 text-neutral-400 sm:text-lg">{sponsorship.description}</p>
+            <CtaButton className="mt-8 hidden lg:inline-flex" href={sponsorship.cta.href} label={sponsorship.cta.label} />
+          </div>
+          <div className="flex flex-col justify-center">
+            <ul className="space-y-3">
+              {sponsorship.benefits.map((b) => (
+                <li className="flex gap-3 rounded-2xl bg-white/[0.03] p-4 text-neutral-200 ring-1 ring-white/5" key={b}>
+                  <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-brand text-on-brand">
+                    <Check aria-hidden className="size-3" strokeWidth={3} />
+                  </span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+            <CtaButton className="mt-8 w-full lg:hidden" href={sponsorship.cta.href} label={sponsorship.cta.label} />
+          </div>
+        </div>
       </Reveal>
     </section>
   );
