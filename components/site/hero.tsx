@@ -3,11 +3,12 @@
 import { CtaButton } from "@/components/site/navbar";
 import TacticalBoard from "@/components/ui/tactical-board";
 import { siteConfig } from "@/config/site";
-import { Lighthouse, type LucideIcon, Palmtree, Sailboat, Shell, Sun, Waves, Wind } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
+import Image from "next/image";
 import { useRef } from "react";
 
-const SPONSOR_ICONS: Record<string, LucideIcon> = { Sun, Waves, Wind, Shell, Palmtree, Lighthouse, Sailboat };
+/** Mínimo de logos em cada metade do marquee: com poucos patrocinadores a lista se repete para cobrir telas largas sem buraco. */
+const MARQUEE_MIN_ITEMS = 8;
 
 const fadeUp = (delay: number) => ({
   initial: { opacity: 0, y: 24 },
@@ -114,29 +115,41 @@ export default function Hero() {
 
 /* -------------------------------------------------------------------------- */
 
-/** Marquee infinito (CSS puro): lista duplicada deslocando -50%, bordas com máscara. */
+/**
+ * Marquee infinito (CSS puro): lista duplicada deslocando -50%, bordas com máscara.
+ * Os logos já são PNGs brancos com fundo transparente (ver `siteConfig.sponsors`),
+ * então ficam uniformes sobre o laranja do hero sem filtro em CSS.
+ */
 function SponsorsMarquee() {
-  const list = siteConfig.sponsors;
+  const sponsors = siteConfig.sponsors;
+  const repeat = Math.max(1, Math.ceil(MARQUEE_MIN_ITEMS / sponsors.length));
+  const half = Array.from({ length: repeat }, () => sponsors).flat();
   return (
     <div
-      aria-label="Patrocinadores"
+      aria-label="Patrocinadores e apoiadores"
       className="group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
       role="region"
     >
       <ul className="flex w-max animate-marquee items-center group-hover:[animation-play-state:paused] motion-reduce:animate-none">
-        {[...list, ...list].map((s, i) => {
-          const Icon = SPONSOR_ICONS[s.icon] ?? Sun;
-          return (
-            <li
-              aria-hidden={i >= list.length}
-              className="flex shrink-0 items-center gap-2.5 px-8 text-2xl font-semibold tracking-tight whitespace-nowrap text-white/90 sm:px-12 sm:text-3xl"
-              key={`${s.name}-${i}`}
-            >
-              <Icon className="size-7 sm:size-8" strokeWidth={2.25} />
-              {s.name}
-            </li>
-          );
-        })}
+        {[...half, ...half].map((s, i) => (
+          <li
+            // só a primeira volta é lida por leitores de tela; as repetições são decorativas
+            aria-hidden={i >= sponsors.length}
+            className="flex shrink-0 items-center px-8 sm:px-12"
+            key={`${s.logo}-${i}`}
+          >
+            <Image
+              alt={s.name}
+              className="h-9 w-auto opacity-90 drop-shadow-[0_1px_6px_rgb(0_0_0/0.18)] transition-opacity group-hover:opacity-100 sm:h-11"
+              height={s.height}
+              // largura exibida na maior altura (h-11 = 44px); o next/image multiplica pela densidade da tela
+              sizes={`${Math.ceil((s.width * 44) / s.height)}px`}
+              src={s.logo}
+              title={s.name}
+              width={s.width}
+            />
+          </li>
+        ))}
       </ul>
     </div>
   );

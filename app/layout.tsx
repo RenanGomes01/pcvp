@@ -70,11 +70,11 @@ export const viewport: Viewport = {
   // desenha por baixo da Ilha Dinâmica / barra de gestos (sem faixas pretas);
   // o recuo fica a cargo de env(safe-area-inset-*) em globals.css
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0a0a0a" },
-    { media: "(prefers-color-scheme: dark)", color: "#ffffff" },
-  ],
-  colorScheme: "light dark",
+  // cor da moldura (bezel) do tema claro, que é o padrão; o ThemeToggle troca
+  // para branco quando a pessoa ativa o escuro (não depende do sistema)
+  themeColor: "#0a0a0a",
+  // o site abre sempre no claro (o escuro só entra pelo botão de tema)
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

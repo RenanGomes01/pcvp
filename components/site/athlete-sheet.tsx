@@ -4,8 +4,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import PortraitBackdrop from "@/components/site/portrait-backdrop";
 import type { TeamMember } from "@/config/site";
 import { Medal, Quote, Trophy } from "lucide-react";
-import { useLenis } from "lenis/react";
-import { useEffect } from "react";
+import { useSheetScrollLock } from "@/lib/use-sheet-scroll-lock";
 
 /**
  * Painel lateral (direita) com o perfil detalhado do atleta:
@@ -24,24 +23,18 @@ export default function AthleteSheet({
 }) {
   const open = member !== null;
 
-  // pausa o scroll suave da página enquanto o painel está aberto
-  const lenis = useLenis();
-  useEffect(() => {
-    if (!lenis) return;
-    if (open) lenis.stop();
-    else lenis.start();
-    return () => lenis.start();
-  }, [lenis, open]);
+  // trava o scroll da página sem tocar no <html>/<body> no iPhone (ver o hook)
+  const modal = useSheetScrollLock(open);
 
   return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
+    <Sheet modal={modal} onOpenChange={onOpenChange} open={open}>
       <SheetContent
-        className="gap-0 border-white/10 bg-neutral-950 p-0 text-neutral-200 data-[side=right]:w-full data-[side=right]:sm:max-w-lg"
+        className="gap-0 border-white/10 bg-neutral-950 p-0 pt-[env(safe-area-inset-top,0px)] text-neutral-200 data-[side=right]:w-full data-[side=right]:sm:max-w-lg"
         side="right"
       >
         {member && (
           <>
-            <SheetHeader className="border-b border-white/5 p-6 pr-14">
+            <SheetHeader className="touch-none border-b border-white/5 p-6 pr-14">
               <div className="flex items-center gap-4">
                 <span className="theme-fixed relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[#3b1600] text-2xl font-semibold text-white">
                   <PortraitBackdrop lines={false} />
@@ -74,7 +67,9 @@ export default function AthleteSheet({
             </SheetHeader>
 
             {/* conteúdo rolável (data-lenis-prevent: o Lenis não intercepta o wheel aqui) */}
-            <div className="flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent="">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[env(safe-area-inset-bottom,0px)]" data-lenis-prevent="">
+              {/* 1px a mais que a área: sempre rolável, então o overscroll-contain segura o gesto mesmo em perfis curtos */}
+              <div className="min-h-[calc(100%+1px)]">
               {member.profile.quote && (
                 <figure className="relative px-6 pt-8 pb-6">
                   <Quote aria-hidden className="mb-3 size-6 text-brand" />
@@ -99,6 +94,7 @@ export default function AthleteSheet({
               <ProfileList icon={Medal} items={member.profile.awards} title="Prêmios Individuais" />
 
               <div className="h-8" />
+              </div>
             </div>
           </>
         )}

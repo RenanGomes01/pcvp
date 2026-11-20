@@ -13,6 +13,7 @@ import { athleteToMember, type BentoView } from "@/lib/bento";
 import { cn, externalLinkProps } from "@/lib/utils";
 import { CalendarDays, Dumbbell, Flame, MapPin, Swords, Trophy } from "lucide-react";
 import { motion, useScroll, useTransform } from "motion/react";
+import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
@@ -282,11 +283,16 @@ export function ScheduleSection() {
 /*                  seção interativa: efeito de partículas                    */
 /* -------------------------------------------------------------------------- */
 
-/** A logo em partículas é 100% laranja da marca, nos dois temas. */
-const PARTICLE_COLORS = ["#ff6600"];
+/**
+ * Cor das letras da logo em partículas: preto no tema claro (fundo branco,
+ * contraste máximo) e laranja da marca no escuro.
+ */
+const PARTICLE_COLORS_LIGHT = ["#0a0a0a"];
+const PARTICLE_COLORS_DARK = ["#ff6600"];
 
 export function ParticleShowcase() {
   const { particles } = siteConfig;
+  const { resolvedTheme } = useTheme();
   // telas estreitas: logo menor → grade mais densa para manter a definição
   const [gap, setGap] = useState(6);
   useEffect(() => {
@@ -309,7 +315,7 @@ export function ParticleShowcase() {
       {/* mobile: 70svh deixa área livre para rolar; tocar FORA das letras rola a página */}
       <ParticleText
         className="h-[70svh] min-h-[460px] bg-transparent sm:h-[88svh] sm:min-h-[520px]"
-        colors={PARTICLE_COLORS}
+        colors={resolvedTheme === "dark" ? PARTICLE_COLORS_DARK : PARTICLE_COLORS_LIGHT}
         gap={gap}
         imageCutoff={particles.imageCutoff}
         src={particles.image}

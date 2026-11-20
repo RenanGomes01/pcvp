@@ -56,7 +56,7 @@ export type Coach = {
 export type PricingPlan = {
   name: string;
   description: string;
-  /** Mensalidade em reais. Sem ela, o card mostra `priceLabel` (ex.: "Sob avaliação"). */
+  /** Mensalidade em reais. Sem ela, o card mostra `priceLabel` (ex.: "Agende uma aula experimental"). */
   price?: number;
   /** Sufixo do preço (ex.: "/mês"); só aparece junto com `price`. */
   period?: string;
@@ -72,7 +72,12 @@ export type PricingPlan = {
   cta: { label: string; href: string };
 };
 
-export type Ebook = {
+/** Card informativo do bloco "Guias do time" (conteúdo real do PCVP, não é produto à venda). */
+export type TeamGuide = {
+  /** Rótulo da capa em degradê (ex.: "Guia", "Programa"). */
+  kind: string;
+  /** Selo acima do título. */
+  badge: string;
   title: string;
   description: string;
   topics: string[];
@@ -201,17 +206,16 @@ export const siteConfig = {
   },
 
   /**
-   * Patrocinadores do marquee no pé do hero.
-   * `icon` é o nome de um ícone do lucide-react (placeholder até chegarem os logos reais).
+   * Patrocinadores e apoiadores do marquee no pé do hero.
+   * `logo`: PNG em `public/patrocinio/` já tratado em BRANCO com fundo
+   * transparente (os originais coloridos ficam em `assets/patrocinio-originais/`).
+   * `width`/`height`: tamanho real do arquivo (proporção usada pelo next/image).
    */
   sponsors: [
-    { name: "Solaris", icon: "Sun" },
-    { name: "Mareia", icon: "Waves" },
-    { name: "Ventura", icon: "Wind" },
-    { name: "Coral Co.", icon: "Shell" },
-    { name: "Palmeira", icon: "Palmtree" },
-    { name: "Farol", icon: "Lighthouse" },
-    { name: "Altamar", icon: "Sailboat" },
+    { name: "AABB Cuiabá", logo: "/patrocinio/aabb.png", width: 203, height: 109 },
+    { name: "CT Bonifácia", logo: "/patrocinio/ctbonifacia.png", width: 339, height: 180 },
+    { name: "Federação Mato-Grossense de Voleibol (FMTV)", logo: "/patrocinio/fmtv.png", width: 1124, height: 180 },
+    { name: "SECEL · Governo de Mato Grosso", logo: "/patrocinio/secel.png", width: 667, height: 180 },
   ],
 
   statement: {
@@ -260,8 +264,9 @@ export const siteConfig = {
           {
             title: "Trajetória e Projetos em Mato Grosso",
             items: [
-              "Fundador e comandante do PCVP ao lado da professora Marisléa Coelho, atuando da iniciação (Sub-15) ao alto rendimento adulto em Cuiabá (AABB Cuiabá e CT Bonifácia).",
-              "Organizador e incentivador do Circuito Mato-Grossense de Vôlei de Praia (CMTVP), conectando o ranking estadual às etapas nacionais.",
+              "Técnico e fundador do Time PCVP, que comanda ao lado da professora Marisléa Coelho da iniciação (Sub-15) ao alto rendimento adulto em Cuiabá (AABB Cuiabá e CT Bonifácia).",
+              "À frente do PCVP, construiu uma das equipes mais competitivas de Mato Grosso, com medalhas e pódios constantes no circuito estadual, incluindo o pódio completo no masculino (1º, 2º e 3º lugares) na última etapa do Circuito Mato-Grossense de Vôlei de Praia.",
+              "Atuou na organização do Circuito Mato-Grossense (CMTVP) quando coordenava o vôlei de praia da FMTV, cargo que não ocupa mais; hoje se dedica ao comando técnico do Time PCVP.",
               "Treinador contemplado pelo programa estadual Olimpus (Bolsa Técnico/Atleta do Governo de Mato Grosso).",
             ],
           },
@@ -270,7 +275,7 @@ export const siteConfig = {
             items: [
               "Campeão Brasileiro Geral CBI Sub-17 (2024) com Felippe Prudêncio e Davi Coimbra, conquistando convocação para o Camp da Seleção Brasileira em 2025.",
               "Campeão Brasileiro Geral CBI Sub-21 (2026) com Felippe Prudêncio e Murilo Rocha, vencendo etapas em Serra (ES) e Uberlândia (MG).",
-              "Preparação contínua de duplas para o Circuito Brasileiro Aberto, CBDU e seletivas internacionais universitárias (FISU).",
+              "Preparação contínua de duplas para o Circuito Brasileiro Aberto, CBDU e competições internacionais universitárias (FISU).",
             ],
           },
         ],
@@ -283,13 +288,13 @@ export const siteConfig = {
         image: "/atletas/leia.png",
         credentials: ["Educação Física", "Cofundadora PCVP", "Pedagogia & Base", "Circuito Estadual CMTVP"],
         shortBio:
-          "Professora de Educação Física, treinadora e cofundadora do PCVP em Cuiabá (MT). Especialista na pedagogia esportiva e na transição de jovens talentos para o alto rendimento, coordena os treinos diários da iniciação (Sub-15 a Sub-19) às equipes adultas femininas, masculinas e mistas em torneios estaduais e nacionais.",
+          "Professora de Educação Física, treinadora e cofundadora do PCVP em Cuiabá (MT). Especialista na pedagogia esportiva e na transição de jovens talentos para o alto rendimento, coordena os treinos diários da iniciação (Sub-15 a Sub-19) às equipes adultas femininas e masculinas em torneios estaduais e nacionais.",
         sections: [
           {
             title: "Atuação no Centro de Treinamento (PCVP)",
             items: [
               "Coordenação e comando técnico diário ao lado de Paulo Coelho, da iniciação e base (Sub-15, Sub-17 e Sub-19) até as categorias adultas em Cuiabá.",
-              "Preparação técnica e física de duplas femininas, masculinas e mistas para etapas estaduais, Campeonato Brasileiro Interclubes (CBI) e jogos universitários (CBDU).",
+              "Preparação técnica e física de duplas masculinas e femininas para etapas estaduais, Campeonato Brasileiro Interclubes (CBI) e jogos universitários (CBDU).",
               "Acompanhamento direto de atletas em competições e no programa estadual Olimpus nos polos AABB Cuiabá e CT Bonifácia.",
             ],
           },
@@ -746,7 +751,7 @@ export const siteConfig = {
     ] satisfies ScheduleSession[],
   },
 
-  /** Planos do CT: turmas regulares (terça e quinta) e Alto Rendimento (sob avaliação). */
+  /** Planos do CT: turmas regulares (terça e quinta) e Alto Rendimento (aula experimental). */
   pricing: {
     eyebrow: "Planos",
     title: "Escolha sua turma",
@@ -770,8 +775,8 @@ export const siteConfig = {
       },
       {
         name: "Alto Rendimento (Masculino & Feminino)",
-        priceLabel: "Sob avaliação",
-        priceNote: "Ingresso mediante avaliação técnica com a comissão.",
+        priceLabel: "Agende uma aula experimental",
+        priceNote: "Venha treinar com a equipe e conhecer a comissão técnica.",
         description: "Preparação intensiva técnica, tática e física para atletas de competição no Masculino e Feminino.",
         highlight: "Terça a Sábado",
         featured: true,
@@ -780,31 +785,44 @@ export const siteConfig = {
           { time: "Sábado · 09:00 às 12:00", group: "Treino Avançado / Físico" },
         ],
         cta: {
-          label: "Marcar minha avaliação",
-          href: "https://wa.me/5565999826809?text=Ol%C3%A1!%20Gostaria%20de%20marcar%20uma%20avalia%C3%A7%C3%A3o%20para%20o%20treino%20de%20Alto%20Rendimento%20do%20PCVP.",
+          label: "Agendar aula experimental",
+          href: "https://wa.me/5565999826809?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20aula%20experimental%20no%20treino%20de%20Alto%20Rendimento%20do%20PCVP.",
         },
       },
     ] satisfies PricingPlan[],
   },
 
-  /** Produtos digitais. */
-  ebooks: {
-    eyebrow: "eBooks",
-    title: "Descubra o Mundo do Vôlei de Praia com Nossos eBooks Exclusivos",
+  /**
+   * Guias do time: reaproveita o layout de capas em degradê para informação
+   * real do PCVP (como começar e quais são os programas de treino).
+   * Não há e-book nem material pago: os CTAs levam ao WhatsApp e aos planos.
+   */
+  guides: {
+    eyebrow: "Guias do time",
+    title: "Tudo o que você precisa saber para começar a treinar no PCVP",
     items: [
       {
-        title: "Como se Tornar um Atleta Profissional de Vôlei de Praia",
-        description: "O caminho da areia ao alto rendimento: rotina, preparação e mentalidade.",
-        topics: ["Rotina de treinos", "Preparação física", "Mentalidade"],
-        cta: { label: "Quero o eBook", href: "#contato" },
+        kind: "Guia",
+        badge: "Primeiro treino",
+        title: "Como funciona a sua aula experimental",
+        description:
+          "Agende pelo WhatsApp, escolha a turma do seu nível e venha conhecer a rotina na areia com a comissão técnica. Traga roupa leve de treino, protetor solar e uma garrafa de água.",
+        topics: ["Agendamento", "O que levar", "Turma ideal"],
+        cta: {
+          label: "Agendar aula experimental",
+          href: "https://wa.me/5565999826809?text=Ol%C3%A1!%20Vim%20pelo%20site%20do%20PCVP%20e%20gostaria%20de%20agendar%20uma%20aula%20experimental.",
+        },
       },
       {
-        title: "Tudo o que você precisa saber sobre o vôlei de praia Brasileiro",
-        description: "História, regras, circuitos e os nomes que fizeram do Brasil uma potência.",
-        topics: ["História", "Regras", "Circuitos"],
-        cta: { label: "Quero o eBook", href: "#contato" },
+        kind: "Programa",
+        badge: "Programas de treino",
+        title: "Da iniciação ao alto rendimento",
+        description:
+          "Iniciante e Escolinha às terças e quintas, turma Intermediária para quem já domina os fundamentos e equipe de Alto Rendimento Masculino e Feminino de terça a sábado.",
+        topics: ["Iniciação & Escolinha", "Intermediário", "Alto Rendimento"],
+        cta: { label: "Ver planos e horários", href: "#planos" },
       },
-    ] satisfies Ebook[],
+    ] satisfies TeamGuide[],
   },
 
   steps: {

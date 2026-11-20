@@ -1,7 +1,7 @@
 import CoachesSection from "@/components/site/coaches-section";
 import CallToAction from "@/components/site/cta-section";
-import EbooksSection from "@/components/site/ebooks-section";
 import GallerySection from "@/components/site/gallery-section";
+import GuidesSection from "@/components/site/guides-section";
 import Hero from "@/components/site/hero";
 import Navbar, { ScreenFrame } from "@/components/site/navbar";
 import PricingSection from "@/components/site/pricing-section";
@@ -38,7 +38,7 @@ export default function Home() {
         <ParticleShowcase />
         <Steps />
         <GallerySection />
-        <EbooksSection />
+        <GuidesSection />
         <CallToAction />
       </main>
       <Footer />

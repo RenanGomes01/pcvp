@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 const noopSubscribe = () => () => {};
 
@@ -15,6 +15,12 @@ export default function ThemeToggle({ className }: { className?: string }) {
   const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const dark = mounted && resolvedTheme === "dark";
   const label = dark ? "Ativar modo claro" : "Ativar modo escuro";
+
+  // barra do navegador acompanha a moldura (bezel): preta no claro, branca no escuro
+  useEffect(() => {
+    if (!mounted) return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? "#ffffff" : "#0a0a0a"));
+  }, [dark, mounted]);
 
   return (
     <motion.button

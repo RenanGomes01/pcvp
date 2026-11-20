@@ -1,0 +1,4 @@
+# nunca enviar segredos locais no deploy (as variáveis ficam no painel da Vercel)
+.env*
+# originais coloridos dos logos (o site usa as versões brancas de public/patrocinio)
+assets/

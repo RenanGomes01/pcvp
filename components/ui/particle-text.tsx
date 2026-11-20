@@ -320,8 +320,13 @@ export default function ParticleText({
     physRef.current = phys;
   });
 
-  // `colors` costuma vir como literal de array; serializa para estabilizar deps
-  const colorsKey = colors.join("|");
+  // cores lidas a cada frame: trocar a cor (ex.: tema claro/escuro) repinta as
+  // partículas sem reconstruir a logo. Só a QUANTIDADE de cores reinicia o efeito.
+  const colorsRef = useRef(colors);
+  useEffect(() => {
+    colorsRef.current = colors;
+  });
+  const colorCount = colors.length;
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -329,7 +334,7 @@ export default function ParticleText({
     const ctx = canvas?.getContext("2d");
     if (!wrap || !canvas || !ctx) return;
 
-    const palette = colorsKey.split("|");
+    const palette = colorsRef.current;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // ponteiro: posição atual + do frame anterior (segmento da lâmina) e velocidade suavizada
@@ -635,7 +640,7 @@ export default function ParticleText({
       ctx.textBaseline = "middle";
 
       for (let b = 0; b < buckets.length; b++) {
-        ctx.fillStyle = palette[b];
+        ctx.fillStyle = colorsRef.current[b] ?? palette[b];
         const list = buckets[b];
         for (let i = 0; i < list.length; i++) {
           const p = list[i];
@@ -846,7 +851,7 @@ export default function ParticleText({
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [text, src, imageCutoff, glyphs, colorsKey, gap, glyphScale, maxParticles, fontWeight, fontFamily, intro, anchorRows]);
+  }, [text, src, imageCutoff, glyphs, colorCount, gap, glyphScale, maxParticles, fontWeight, fontFamily, intro, anchorRows]);
 
   return (
     <div

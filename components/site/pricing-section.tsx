@@ -10,8 +10,8 @@ const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL",
 
 /**
  * Planos: 2 cards de alto contraste. Um plano sem `price` mostra `priceLabel`
- * (ex.: "Sob avaliação") no mesmo espaço, sem sufixo, para manter os cards
- * alinhados. CTAs externos (WhatsApp) abrem em nova aba. No hover, uma borda
+ * (ex.: "Agende uma aula experimental") no mesmo espaço, sem sufixo; texto longo
+ * quebra em até duas linhas. CTAs externos (WhatsApp) abrem em nova aba. No hover, uma borda
  * cônica gira em volta do card (glow) e um halo acende atrás.
  */
 export default function PricingSection() {
@@ -89,7 +89,7 @@ export default function PricingSection() {
                       {plan.period && <span className="text-neutral-400">{plan.period}</span>}
                     </p>
                   ) : (
-                    <p className="flex h-[3.75rem] items-end font-serif text-5xl leading-none tracking-tight text-white italic sm:text-[3.5rem]">
+                    <p className="flex min-h-[3.75rem] items-end font-serif text-4xl leading-[1.05] tracking-tight text-balance text-white italic sm:text-[2.75rem]">
                       {plan.priceLabel}
                     </p>
                   )}
