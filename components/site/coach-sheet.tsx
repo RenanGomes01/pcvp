@@ -34,11 +34,12 @@ export function initials(name: string) {
 export default function CoachSheet({ coach, onOpenChange }: { coach: Coach | null; onOpenChange: (open: boolean) => void }) {
   const open = coach !== null;
 
-  // trava o scroll da página sem tocar no <html>/<body> no iPhone (ver o hook)
-  const modal = useSheetScrollLock(open);
+  // trava o scroll sem tocar no <html>/<body> no iPhone e, ao fechar, avisa a
+  // moldura para o Safari reamostrar a cor da Ilha Dinâmica (ver o hook)
+  const sheetProps = useSheetScrollLock(open);
 
   return (
-    <Sheet modal={modal} onOpenChange={onOpenChange} open={open}>
+    <Sheet {...sheetProps} onOpenChange={onOpenChange} open={open}>
       <SheetContent
         className="gap-0 border-white/10 bg-neutral-950 p-0 pt-[env(safe-area-inset-top,0px)] text-neutral-200 data-[side=right]:w-full data-[side=right]:sm:max-w-xl"
         side="right"

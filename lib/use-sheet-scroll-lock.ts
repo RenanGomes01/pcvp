@@ -1,6 +1,7 @@
 "use client";
 
 import { useLenis } from "lenis/react";
+import { notifySheetClosed } from "@/lib/safari-chrome";
 import { useEffect, useSyncExternalStore } from "react";
 
 const TOUCH_QUERY = "(pointer: coarse)";
@@ -20,14 +21,16 @@ const isTouch = () => window.matchMedia(TOUCH_QUERY).matches;
  *
  * Toque (iPhone/iPad): NÃO mexe no <html> nem no <body>. O Lenis põe
  * `overflow: clip` no <html> ao parar, e o Base UI põe `overflow: hidden`
- * no <html>/<body>. No Safari do iOS, alternar o overflow do <html> desalinha
- * os elementos `position: fixed`: a faixa da moldura que cobre a Ilha Dinâmica
- * deixava de acompanhar a rolagem e o conteúdo vazava por cima do topo depois de
- * fechar o painel. Com `modal: "trap-focus"` o foco continua preso no painel,
+ * no <html>/<body>. No Safari do iOS, alternar o overflow do <html> pode
+ * desalinhar elementos `position: fixed` (efeito colateral evitado aqui; a causa
+ * do vazamento no topo é outra, ver `lib/safari-chrome.ts`).
+ * Com `modal: "trap-focus"` o foco continua preso no painel,
  * e a página de trás não rola porque o painel ocupa a tela toda
  * (`touch-none` no cabeçalho/fundo, `overscroll-contain` na área rolável).
- * Assim, abrir e fechar não altera o documento: o topo volta exatamente ao
- * estado do carregamento.
+ * Assim, abrir e fechar não altera o documento.
+ *
+ * Retorna as props do <Sheet>: `modal` e `onOpenChangeComplete`, que avisa a
+ * moldura quando o painel terminou de fechar (ver `lib/safari-chrome.ts`).
  */
 export function useSheetScrollLock(open: boolean) {
   const lenis = useLenis();
@@ -40,5 +43,10 @@ export function useSheetScrollLock(open: boolean) {
     return () => lenis.start();
   }, [lenis, open, touch]);
 
-  return touch ? ("trap-focus" as const) : true;
+  return {
+    modal: touch ? ("trap-focus" as const) : true,
+    onOpenChangeComplete: (isOpen: boolean) => {
+      if (!isOpen) notifySheetClosed();
+    },
+  };
 }

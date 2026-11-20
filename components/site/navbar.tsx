@@ -1,33 +1,52 @@
 "use client";
 
 import { siteConfig } from "@/config/site";
+import { SHEET_CLOSED_EVENT } from "@/lib/safari-chrome";
 import { cn, externalLinkProps } from "@/lib/utils";
 import { ArrowDownRight, ChevronDown, Menu, X } from "lucide-react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
 import Image from "next/image";
-import { type PointerEvent, useState } from "react";
+import { type PointerEvent, useEffect, useState } from "react";
 
 /**
  * Moldura fixa da tela ("bezel"): uma borda na cor invertida ao tema, com
  * cantos internos bem arredondados. Todo o site rola "dentro" dela, como
- * numa tela de celular. Não captura cliques. Os recuos somam as safe areas
- * do iOS, então a moldura contorna a Ilha Dinâmica e a barra de gestos.
+ * numa tela de celular. Os recuos somam as safe areas do iOS, então a moldura
+ * contorna a Ilha Dinâmica e a barra de gestos.
  *
- * As faixas sólidas de topo e base (fundo opaco `bg-bezel`, largura total)
- * cobrem a área da Ilha Dinâmica e da barra de gestos. O Safari do iOS usa o
- * fundo de elementos fixos encostados na borda para pintar essas áreas; só a
- * sombra não basta, e o conteúdo apareceria por trás ao rolar.
+ * Faixas de topo e base = o elemento que o Safari 26 do iOS amostra para pintar
+ * a área da Ilha Dinâmica e da barra de gestos (ver `lib/safari-chrome.ts`).
+ * Para a amostragem nunca mudar de dono, elas são:
+ * - de largura total, opacas, sem backdrop-filter;
+ * - ACIMA dos painéis (z-60 > z-50 do Sheet/fundo escurecido): o painel aberto
+ *   nunca ocupa o ponto amostrado (centro da borda), então a cor não troca ao
+ *   abrir/fechar. O painel já começa abaixo delas (padding de safe-area);
+ * - clicáveis (sem `pointer-events: none`): o Safari faz um 2º teste que
+ *   respeita pointer-events, e uma faixa "transparente ao toque" seria pulada;
+ * - recriadas (nova `key`) quando um painel termina de fechar, o que força o
+ *   Safari a amostrar de novo caso a borda tenha ficado presa no cache.
  */
 export function ScreenFrame() {
+  const [generation, setGeneration] = useState(0);
+  useEffect(() => {
+    const rearm = () => setGeneration((g) => g + 1);
+    window.addEventListener(SHEET_CLOSED_EVENT, rearm);
+    return () => window.removeEventListener(SHEET_CLOSED_EVENT, rearm);
+  }, []);
+
   return (
     <>
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 z-40 h-[calc(0.375rem+env(safe-area-inset-top,0px))] bg-bezel sm:h-[calc(0.5rem+env(safe-area-inset-top,0px))]"
+        className="fixed inset-x-0 top-0 z-[60] h-[calc(0.375rem+env(safe-area-inset-top,0px))] bg-bezel sm:h-[calc(0.5rem+env(safe-area-inset-top,0px))]"
+        data-edge-strip="top"
+        key={`top-${generation}`}
       />
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[calc(0.375rem+env(safe-area-inset-bottom,0px))] bg-bezel sm:h-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        className="fixed inset-x-0 bottom-0 z-[60] h-[calc(0.375rem+env(safe-area-inset-bottom,0px))] bg-bezel sm:h-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        data-edge-strip="bottom"
+        key={`bottom-${generation}`}
       />
       <div
         aria-hidden
