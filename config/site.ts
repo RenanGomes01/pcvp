@@ -231,6 +231,9 @@ export const siteConfig = {
     names: { barrao: "Barrão", vitao: "Vitão", pcvp: "PCVP", cbi: "CBI" } as Record<string, string>,
     labels: {
       "campeao-jaciara": "Campeão em Jaciara",
+      "campeao-sub21-cbi": "Campeões do CBI Sub-21",
+      "campeao-sub21_cbi": "Campeões do CBI Sub-21",
+      "campeao-sudamericano": "Campeão Sul-Americano Sub-18",
       cbi_sub21_uberlandia: "CBI Sub-21 em Uberlândia",
       "larissa-quartas-brasileiro": "Larissa nas quartas do Brasileiro",
       "paulo-saquarema": "Paulo em Saquarema",
@@ -303,7 +306,14 @@ export const siteConfig = {
         title: "Pódio Internacional e Mundial",
         description:
           "O atleta Felippe Prudêncio (\"Lippe\") sagrou-se Campeão Sul-Americano Sub-18 pela Seleção Brasileira e conquistou o 9º lugar no Campeonato Mundial Sub-18 em Doha, no Catar.",
-        previews: [{ text: 'Felippe Prudêncio ("Lippe")', image: "/gallery/lippe.png", alt: "Felippe Prudêncio, o Lippe", rotate: -5 }],
+        previews: [
+          {
+            text: 'Felippe Prudêncio ("Lippe")',
+            image: "/gallery/campeao-sudamericano.png",
+            alt: "Felippe Prudêncio no pódio do Sul-Americano Sub-18",
+            rotate: -5,
+          },
+        ],
       },
       {
         icon: "trophy",
@@ -313,8 +323,8 @@ export const siteConfig = {
         previews: [
           {
             text: "Campeonato Brasileiro Interclubes (CBI) Sub-21",
-            image: "/gallery/podio-cbi.png",
-            alt: "Pódio do CBI Sub-21 com a faixa do PCVP",
+            image: "/gallery/campeao-sub21_cbi.png",
+            alt: "Campeões do CBI Sub-21 com a faixa do PCVP",
             rotate: 4,
           },
         ],

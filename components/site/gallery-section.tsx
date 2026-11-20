@@ -2,6 +2,7 @@ import ShuffledGallery from "@/components/site/shuffled-gallery";
 import type { PassageItem } from "@/components/ui/passage-gallery";
 import { siteConfig } from "@/config/site";
 import { Hand, Mouse } from "lucide-react";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -31,10 +32,18 @@ function caption(file: string) {
 function getGalleryItems(): PassageItem[] {
   const dir = path.join(process.cwd(), "public", "gallery");
   try {
+    // a mesma foto salva com dois nomes entra uma vez só (compara o conteúdo)
+    const seen = new Set<string>();
     return fs
       .readdirSync(dir)
       .filter((file) => IMAGE_EXT.test(file))
       .sort((a, b) => a.localeCompare(b, "pt-BR"))
+      .filter((file) => {
+        const hash = createHash("sha1").update(fs.readFileSync(path.join(dir, file))).digest("hex");
+        if (seen.has(hash)) return false;
+        seen.add(hash);
+        return true;
+      })
       .map((file) => {
         const label = caption(file);
         return {

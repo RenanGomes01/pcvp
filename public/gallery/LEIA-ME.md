@@ -21,6 +21,7 @@ legenda certa em `config/site.ts` → `gallery.labels`; acentos e apelidos
 - Use letras minúsculas, sem espaços, com `-` (ou `_`) separando as palavras.
 - Evite acentos e `ç` no nome do arquivo (escreva `por-do-sol`, não `pôr-do-sol`).
 - A ordem no túnel é sorteada a cada visita.
+- A mesma foto salva com dois nomes aparece uma vez só no túnel.
 - Formatos aceitos: `.jpg`, `.jpeg`, `.png`, `.webp`.
   Outros arquivos (como este LEIA-ME) são ignorados.
 
