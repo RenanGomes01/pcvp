@@ -262,8 +262,20 @@ export function toView(data: BentoData): BentoView {
       },
     ],
     athletes: data.athletes.filter((a) => a.active).sort(byOrder),
-    coachesList: data.coachesList.filter((c) => c.active).sort(byOrder),
+    coachesList: data.coachesList
+      .filter((c) => c.active)
+      .sort(byOrder)
+      .map((c) => (c.instagramUrl ? c : { ...c, instagramUrl: defaultInstagramUrl(c.name) })),
   };
+}
+
+/**
+ * O /admin não edita o link do Instagram: técnicos salvos com o campo vazio
+ * usam o `instagramUrl` do `config/site.ts` (casando pelo nome curto).
+ */
+function defaultInstagramUrl(name: string) {
+  const match = (siteConfig.coaches.items as readonly Coach[]).find((c) => c.name === name);
+  return match?.instagramUrl ?? "";
 }
 
 /** Atleta no formato dos componentes da Home (órbita e painel de perfil). */
