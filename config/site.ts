@@ -213,7 +213,7 @@ export const siteConfig = {
    */
   sponsors: [
     { name: "AABB Cuiabá", logo: "/patrocinio/aabb.png", width: 203, height: 109 },
-    { name: "CT Bonifácia", logo: "/patrocinio/ctbonifacia.png", width: 339, height: 180 },
+    { name: "Projeto Olimpus MT · Bolsa Atleta", logo: "/patrocinio/bolsa-atleta.png", width: 574, height: 155 },
     { name: "Federação Mato-Grossense de Voleibol (FMTV)", logo: "/patrocinio/fmtv.png", width: 1124, height: 180 },
     { name: "SECEL · Governo de Mato Grosso", logo: "/patrocinio/secel.png", width: 667, height: 180 },
   ],
