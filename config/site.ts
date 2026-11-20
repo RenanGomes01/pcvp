@@ -305,7 +305,7 @@ export const siteConfig = {
         icon: "graduation",
         title: "Destaque no Esporte Universitário",
         description:
-          "A atleta Larissa Vasconcelos conquistou o título de Campeã Sul-Americana Universitária (FISU), além de representar o Brasil em competições sul-americanas de base.",
+          "A atleta Larissa Vasconcelos garantiu a vaga ao se sagrar campeã brasileira e, na sequência, conquistou o título de Campeã Sul-Americana Universitária (FISU).",
       },
       {
         icon: "medal",
@@ -350,7 +350,7 @@ export const siteConfig = {
             title: "Trajetória e Projetos em Mato Grosso",
             items: [
               "Técnico e fundador do Time PCVP, que comanda ao lado da professora Marisléa Coelho da iniciação (Sub-15) ao alto rendimento adulto em Cuiabá (AABB Cuiabá e CT Bonifácia).",
-              "À frente do PCVP, construiu uma das equipes mais competitivas de Mato Grosso, com medalhas e pódios constantes no circuito estadual, incluindo o pódio completo no masculino (1º, 2º e 3º lugares) na última etapa do Circuito Mato-Grossense de Vôlei de Praia.",
+              "À frente do PCVP, construiu uma das equipes mais competitivas de Mato Grosso: o time Paulo Coelho marca presença constante nos pódios de todas as etapas do Circuito Mato-Grossense de Vôlei de Praia, do Sub-17 e Sub-19 ao adulto, no masculino e no feminino.",
               "Atuou na organização do Circuito Mato-Grossense (CMTVP) quando coordenava o vôlei de praia da FMTV, cargo que não ocupa mais; hoje se dedica ao comando técnico do Time PCVP.",
               "Treinador contemplado pelo programa estadual Olimpus (Bolsa Técnico/Atleta do Governo de Mato Grosso).",
             ],
