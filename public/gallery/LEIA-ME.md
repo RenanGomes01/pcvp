@@ -9,15 +9,19 @@ O nome do arquivo vira a legenda da foto:
 
 | Arquivo                     | Legenda no túnel        |
 | --------------------------- | ----------------------- |
-| `por-do-sol.jpg`            | Por do sol              |
-| `final-estadual-2025.jpg`   | Final estadual 2025     |
-| `treino_cedo.webp`          | Treino cedo             |
+| `brendow-paulo.png`         | Brendow e Paulo         |
+| `brendow-yuri-barrao.png`   | Brendow, Yuri e Barrão  |
+| `lippe.png`                 | Lippe                   |
+
+Arquivos que não são só nomes de pessoas (ex.: `podio-cbi.png`) ganham a
+legenda certa em `config/site.ts` → `gallery.labels`; acentos e apelidos
+(ex.: `barrao` → Barrão) ficam em `gallery.names`. O texto alternativo
+(`alt`) é a legenda + " - PCVP".
 
 - Use letras minúsculas, sem espaços, com `-` (ou `_`) separando as palavras.
 - Evite acentos e `ç` no nome do arquivo (escreva `por-do-sol`, não `pôr-do-sol`).
-- A ordem no túnel é alfabética. Para controlar a ordem, use um prefixo
-  numérico: `01-abertura.jpg`, `02-treino.jpg`, … (o número aparece na legenda).
-- Formatos aceitos: `.jpg`, `.jpeg`, `.png`, `.webp`, `.avif`, `.gif`, `.svg`.
+- A ordem no túnel é sorteada a cada visita.
+- Formatos aceitos: `.jpg`, `.jpeg`, `.png`, `.webp`.
   Outros arquivos (como este LEIA-ME) são ignorados.
 
 ## Tamanho (importante para a GPU)

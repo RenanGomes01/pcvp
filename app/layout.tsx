@@ -83,7 +83,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       // next-themes adiciona/remove a classe `dark` antes da hidratação
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full bg-bezel antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full bg-shell antialiased`}
     >
       <body className="flex min-h-dvh w-full flex-col">
         <ThemeProvider>

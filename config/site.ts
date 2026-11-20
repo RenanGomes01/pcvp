@@ -203,6 +203,25 @@ export const siteConfig = {
     helperTouch: "Arraste para os lados para explorar o túnel ou toque e segure para acelerar.",
     ariaLabel:
       "Túnel de fotos do time. Role ou arraste para navegar, segure para acelerar, clique numa foto para abri-la e Esc para fechar.",
+    /**
+     * Legendas automáticas: o nome do arquivo vira nomes de pessoas
+     * (`brendow-paulo.png` → "Brendow e Paulo"). `names` corrige grafias
+     * (acentos/apelidos) e `labels` define a legenda inteira de arquivos que
+     * não são só nomes (chave = nome do arquivo sem extensão).
+     */
+    names: { barrao: "Barrão", vitao: "Vitão", pcvp: "PCVP", cbi: "CBI" } as Record<string, string>,
+    labels: {
+      "campeao-jaciara": "Campeão em Jaciara",
+      cbi_sub21_uberlandia: "CBI Sub-21 em Uberlândia",
+      "larissa-quartas-brasileiro": "Larissa nas quartas do Brasileiro",
+      "paulo-saquarema": "Paulo em Saquarema",
+      "pcvp-rj": "PCVP no Rio de Janeiro",
+      "podio-cbi": "Pódio do CBI",
+      "time-pcvp": "Time PCVP",
+      "treino-pre_etapa": "Treino pré-etapa",
+      "vitao-estadual": "Vitão no Estadual",
+      "vitao-nacional": "Vitão no Nacional",
+    } as Record<string, string>,
   },
 
   /**

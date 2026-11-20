@@ -1,12 +1,11 @@
 "use client";
 
 import { siteConfig } from "@/config/site";
-import { SHEET_CLOSED_EVENT } from "@/lib/safari-chrome";
 import { cn, externalLinkProps } from "@/lib/utils";
 import { ArrowDownRight, ChevronDown, Menu, X } from "lucide-react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
 import Image from "next/image";
-import { type PointerEvent, useEffect, useState } from "react";
+import { type PointerEvent, useState } from "react";
 
 /**
  * Moldura fixa da tela ("bezel"): uma borda na cor invertida ao tema, com
@@ -22,31 +21,20 @@ import { type PointerEvent, useEffect, useState } from "react";
  *   nunca ocupa o ponto amostrado (centro da borda), então a cor não troca ao
  *   abrir/fechar. O painel já começa abaixo delas (padding de safe-area);
  * - clicáveis (sem `pointer-events: none`): o Safari faz um 2º teste que
- *   respeita pointer-events, e uma faixa "transparente ao toque" seria pulada;
- * - recriadas (nova `key`) quando um painel termina de fechar, o que força o
- *   Safari a amostrar de novo caso a borda tenha ficado presa no cache.
+ *   respeita pointer-events, e uma faixa "transparente ao toque" seria pulada.
  */
 export function ScreenFrame() {
-  const [generation, setGeneration] = useState(0);
-  useEffect(() => {
-    const rearm = () => setGeneration((g) => g + 1);
-    window.addEventListener(SHEET_CLOSED_EVENT, rearm);
-    return () => window.removeEventListener(SHEET_CLOSED_EVENT, rearm);
-  }, []);
-
   return (
     <>
       <div
         aria-hidden
         className="fixed inset-x-0 top-0 z-[60] h-[calc(0.375rem+env(safe-area-inset-top,0px))] bg-bezel sm:h-[calc(0.5rem+env(safe-area-inset-top,0px))]"
         data-edge-strip="top"
-        key={`top-${generation}`}
       />
       <div
         aria-hidden
         className="fixed inset-x-0 bottom-0 z-[60] h-[calc(0.375rem+env(safe-area-inset-bottom,0px))] bg-bezel sm:h-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
         data-edge-strip="bottom"
-        key={`bottom-${generation}`}
       />
       <div
         aria-hidden
@@ -87,9 +75,11 @@ export default function Navbar() {
 
   return (
     <motion.header
-      animate={{ y: 0 }}
-      className="theme-inverted fixed top-0 left-1/2 z-50 w-[calc(100%-5rem)] max-w-5xl -translate-x-1/2"
-      initial={{ y: "-100%" }}
+      animate={{ opacity: 1 }}
+      // centralizado por margens (sem translate) e entrada só por opacidade: nenhum
+      // `transform` num elemento fixo encostado na barra de status do Safari iOS
+      className="theme-inverted fixed inset-x-0 top-0 z-50 mx-auto w-[calc(100%-5rem)] max-w-5xl"
+      initial={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="relative rounded-b-[1.75rem] bg-bezel pt-[calc(0.375rem+env(safe-area-inset-top,0px))] text-white sm:rounded-b-[2rem] sm:pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">

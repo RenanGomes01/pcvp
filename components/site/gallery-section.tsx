@@ -1,20 +1,32 @@
-import PassageGallery, { type PassageItem } from "@/components/ui/passage-gallery";
+import ShuffledGallery from "@/components/site/shuffled-gallery";
+import type { PassageItem } from "@/components/ui/passage-gallery";
 import { siteConfig } from "@/config/site";
 import { Hand, Mouse } from "lucide-react";
 import fs from "node:fs";
 import path from "node:path";
 
-const IMAGE_EXT = /\.(jpe?g|png|webp|avif|gif|svg)$/i;
+/** Só fotos; o resto (ex.: `LEIA-ME.md`) é ignorado. */
+const IMAGE_EXT = /\.(png|jpe?g|webp)$/i;
 
-/** "por-do-sol.jpg" → "Por do sol" */
-function humanize(file: string) {
-  const name = file.replace(IMAGE_EXT, "").replace(/[-_]+/g, " ").trim();
-  return name.charAt(0).toUpperCase() + name.slice(1);
+const titleCase = (word: string) => siteConfig.gallery.names[word.toLowerCase()] ?? word.charAt(0).toUpperCase() + word.slice(1);
+
+/**
+ * Legenda a partir do nome do arquivo:
+ * "brendow-paulo.png" → "Brendow e Paulo"; "brendow-yuri-barrao.png" →
+ * "Brendow, Yuri e Barrão"; nomes em `gallery.labels` usam a legenda fixa.
+ */
+function caption(file: string) {
+  const base = file.replace(IMAGE_EXT, "");
+  const fixed = siteConfig.gallery.labels[base];
+  if (fixed) return fixed;
+  const words = base.split(/[-_\s]+/).filter(Boolean).map(titleCase);
+  if (words.length <= 1) return words[0] ?? base;
+  return `${words.slice(0, -1).join(", ")} e ${words.at(-1)}`;
 }
 
 /**
- * Lê `public/gallery` no servidor (build/request) e gera os itens do túnel.
- * Para adicionar fotos, basta soltar arquivos de imagem nessa pasta.
+ * Lê `public/gallery` no servidor (no build) e gera os itens do túnel.
+ * Para adicionar ou remover fotos, basta mexer nos arquivos dessa pasta.
  */
 function getGalleryItems(): PassageItem[] {
   const dir = path.join(process.cwd(), "public", "gallery");
@@ -24,8 +36,12 @@ function getGalleryItems(): PassageItem[] {
       .filter((file) => IMAGE_EXT.test(file))
       .sort((a, b) => a.localeCompare(b, "pt-BR"))
       .map((file) => {
-        const label = humanize(file);
-        return { src: `/gallery/${encodeURIComponent(file)}`, alt: label, title: label };
+        const label = caption(file);
+        return {
+          src: `/gallery/${encodeURIComponent(file)}`,
+          alt: /\bPCVP\b/.test(label) ? label : `${label} - PCVP`,
+          title: label,
+        };
       });
   } catch {
     return [];
@@ -60,7 +76,7 @@ export default function GallerySection() {
         Mobile: 60svh deixa ~40% da tela livre para o dedo; e, de qualquer
         forma, o arraste vertical no túnel rola a página (touch-pan-y).
       */}
-      <PassageGallery
+      <ShuffledGallery
         ariaLabel={gallery.ariaLabel}
         backgroundColor="#0a0a0a"
         className="theme-fixed h-[60svh] min-h-[380px] w-full sm:h-[70vh] sm:min-h-[500px] lg:max-h-[760px]"
@@ -76,7 +92,7 @@ export default function GallerySection() {
             {gallery.title} <span className="font-serif font-normal text-brand italic">{gallery.accent}</span>
           </h2>
         </div>
-      </PassageGallery>
+      </ShuffledGallery>
     </section>
   );
 }

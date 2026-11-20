@@ -26,7 +26,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
     <motion.button
       aria-label={mounted ? label : "Alternar tema"}
       className={cn(
-        "fixed right-[calc(1rem+env(safe-area-inset-right,0px))] bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] z-50 grid size-11 place-items-center rounded-full bg-neutral-900 text-white shadow-lg ring-1 shadow-black/20 ring-white/15 backdrop-blur-md sm:right-[calc(1.5rem+env(safe-area-inset-right,0px))] sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))]",
+        "fixed right-[calc(1rem+env(safe-area-inset-right,0px))] bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] z-50 grid size-11 place-items-center rounded-full bg-neutral-900 text-white shadow-lg ring-1 shadow-black/20 ring-white/15 sm:right-[calc(1.5rem+env(safe-area-inset-right,0px))] sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))]",
         "focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none",
         className
       )}
