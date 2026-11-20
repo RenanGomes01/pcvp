@@ -14,13 +14,18 @@ const titleCase = (word: string) => siteConfig.gallery.names[word.toLowerCase()]
 /**
  * Legenda a partir do nome do arquivo:
  * "brendow-paulo.png" → "Brendow e Paulo"; "brendow-yuri-barrao.png" →
- * "Brendow, Yuri e Barrão"; nomes em `gallery.labels` usam a legenda fixa.
+ * "Brendow, Yuri e Barrão"; "victor2.png" → "Victor"; nomes em `gallery.labels` usam a legenda fixa.
  */
 function caption(file: string) {
   const base = file.replace(IMAGE_EXT, "");
   const fixed = siteConfig.gallery.labels[base];
   if (fixed) return fixed;
-  const words = base.split(/[-_\s]+/).filter(Boolean).map(titleCase);
+  // número no fim só diferencia fotos da mesma pessoa: "kayox2" → "Kayox"
+  const words = base
+    .split(/[-_\s]+/)
+    .map((word) => word.replace(/\d+$/, ""))
+    .filter(Boolean)
+    .map(titleCase);
   if (words.length <= 1) return words[0] ?? base;
   return `${words.slice(0, -1).join(", ")} e ${words.at(-1)}`;
 }
