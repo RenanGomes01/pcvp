@@ -2,11 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { Check, ClipboardCheck, Dumbbell, Medal, Swords, Trophy, type LucideIcon } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion, useInView, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 export type PipelineStatus = "done" | "active" | "pending";
 
-export type PipelineStep = { title: string; subtitle: string; status: PipelineStatus };
+export type PipelineStep = { title: string; subtitle: string };
 export type PipelineOutcome = { title: string; subtitle: string };
 
 type PipelineProps = {
@@ -25,6 +26,9 @@ const STATUS_LABEL: Record<PipelineStatus, string> = {
   active: "Em execução",
   pending: "Na fila",
 };
+
+/** Tempo (s) que cada etapa fica "Em execução" antes de passar para a próxima. */
+const STEP_SECONDS = 1.4;
 
 /* -------------------------------------------------------------------------- */
 /*                                  conectores                                */
@@ -78,7 +82,7 @@ function Connector({ lit, delay, reduce }: { lit: boolean; delay: number; reduce
 }
 
 /** Bifurcação em Y: do último passo para os dois destinos (vertical no mobile, horizontal no desktop). */
-function Fork({ delay, reduce }: { delay: number; reduce: boolean }) {
+function Fork({ delay, lit, reduce }: { delay: number; lit: boolean; reduce: boolean }) {
   // viewBox 100×100 esticado; as pontas caem no centro de cada destino (25% e 75%)
   const horizontal = ["M0 50 C 50 50, 50 25, 100 25", "M0 50 C 50 50, 50 75, 100 75"];
   const vertical = ["M50 0 C 50 50, 25 50, 25 100", "M50 0 C 50 50, 75 50, 75 100"];
@@ -90,7 +94,7 @@ function Fork({ delay, reduce }: { delay: number; reduce: boolean }) {
           {!reduce && (
             <motion.path
               animate={{ strokeDashoffset: [100, -20] }}
-              className="stroke-brand"
+              className={lit ? "stroke-emerald-400" : "stroke-white/40"}
               d={d}
               pathLength={100}
               strokeDasharray="20 100"
@@ -129,19 +133,22 @@ function Node({
   index: string;
   title: string;
   subtitle: string;
-  status: PipelineStatus | "outcome";
+  status: PipelineStatus | "outcome" | "champion";
   reduce: boolean;
   className?: string;
 }) {
   const active = status === "active";
   const done = status === "done";
+  const champion = status === "champion";
   return (
     <div
       className={cn(
-        "relative flex flex-col gap-3 overflow-hidden rounded-2xl p-4 ring-1 backdrop-blur-sm transition-colors",
-        active
-          ? "bg-brand/[0.07] shadow-[0_0_40px_-12px_var(--color-brand)] ring-brand/50"
-          : "bg-neutral-900/70 ring-white/10",
+        "relative flex flex-col gap-3 overflow-hidden rounded-2xl p-4 ring-1 backdrop-blur-sm transition-[background-color,box-shadow] duration-500",
+        champion
+          ? "bg-emerald-500/[0.08] shadow-[0_0_40px_-12px_var(--color-emerald-500)] ring-2 ring-emerald-500"
+          : active
+            ? "bg-brand/[0.07] shadow-[0_0_40px_-12px_var(--color-brand)] ring-brand/50"
+            : "bg-neutral-900/70 ring-white/10",
         className
       )}
     >
@@ -149,7 +156,8 @@ function Node({
         <span
           className={cn(
             "grid size-9 shrink-0 place-items-center rounded-xl",
-            active || done ? "bg-brand text-on-brand" : "bg-white/5 text-brand"
+            "transition-colors duration-500",
+            champion ? "bg-emerald-600 text-[#fff]" : active || done ? "bg-brand text-on-brand" : "bg-white/5 text-brand"
           )}
         >
           <Icon className="size-4" />
@@ -163,9 +171,18 @@ function Node({
       </div>
 
       <div className="mt-auto">
-        {status === "outcome" ? (
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-soft">
-            <span className="size-1.5 rounded-full bg-brand-soft" /> Destino
+        {champion ? (
+          <motion.span
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400"
+            initial={reduce ? false : { opacity: 0, y: 4 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <Trophy className="size-3" /> Campeão
+          </motion.span>
+        ) : status === "outcome" ? (
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-neutral-500">
+            <span className="size-1.5 rounded-full bg-neutral-600" /> Destino
           </span>
         ) : (
           <>
@@ -187,7 +204,7 @@ function Node({
               )}
               {STATUS_LABEL[status]}
             </span>
-            {/* barra de progresso: cheia se concluído, correndo em loop se ativo */}
+            {/* barra de progresso: cheia se concluído; enche uma vez durante a execução */}
             <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
               {done && <div className="h-full w-full rounded-full bg-brand/60" />}
               {active &&
@@ -195,9 +212,10 @@ function Node({
                   <div className="h-full w-3/5 rounded-full bg-brand" />
                 ) : (
                   <motion.div
-                    animate={{ width: ["8%", "92%"] }}
+                    animate={{ width: "100%" }}
                     className="h-full rounded-full bg-gradient-to-r from-brand to-brand-soft"
-                    transition={{ duration: 2.8, ease: "easeInOut", repeat: Infinity, repeatType: "reverse" }}
+                    initial={{ width: "0%" }}
+                    transition={{ duration: STEP_SECONDS, ease: "easeInOut" }}
                   />
                 ))}
             </div>
@@ -216,15 +234,34 @@ function Node({
  * Fluxo de etapas conectadas por linhas com pulsos de luz, terminando numa
  * bifurcação para os destinos finais. Horizontal no desktop, empilhado no
  * mobile (sem scroll lateral).
+ *
+ * Toca uma única vez, quando a seção entra na tela (IntersectionObserver via
+ * `useInView({ once: true })`): 01 → 02 → 03 e, por fim, os destinos 4A e 4B
+ * ficam com borda verde e o selo "Campeão", e permanecem assim.
  */
 export default function Pipeline({ steps, outcomes, label, className }: PipelineProps) {
   const reduce = useReducedMotion() ?? false;
-  const activeIndex = steps.findIndex((s) => s.status === "active");
-  // trechos até a etapa ativa ficam "acesos" (laranja); depois dela, neutros
-  const isLit = (i: number) => activeIndex === -1 || i < activeIndex;
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  // -1 = ainda não visto; 0..n-1 = etapa em execução; n = destinos alcançados
+  const [stage, setStage] = useState(-1);
+  const finalStage = steps.length;
+  const current = reduce && inView ? finalStage : stage;
+
+  useEffect(() => {
+    if (!inView || reduce || stage >= finalStage) return;
+    // começa logo ao entrar; cada etapa fica STEP_SECONDS em execução
+    const id = window.setTimeout(() => setStage((s) => s + 1), stage < 0 ? 250 : STEP_SECONDS * 1000);
+    return () => window.clearTimeout(id);
+  }, [inView, reduce, stage, finalStage]);
+
+  const statusOf = (i: number): PipelineStatus => (i < current ? "done" : i === current ? "active" : "pending");
+  // trecho entre a etapa i-1 e a i fica "aceso" (laranja) quando a i já começou
+  const isLit = (i: number) => current >= i;
+  const reached = current >= finalStage;
 
   return (
-    <div aria-label={label} className={className} role="group">
+    <div aria-label={label} className={className} ref={ref} role="group">
       <ol className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_2.5rem_minmax(0,1fr)_2.5rem_minmax(0,1fr)_3.5rem_minmax(0,1fr)] lg:items-center">
         {steps.map((step, i) => (
           <li className="contents" key={step.title}>
@@ -232,25 +269,25 @@ export default function Pipeline({ steps, outcomes, label, className }: Pipeline
               icon={STEP_ICONS[i] ?? ClipboardCheck}
               index={String(i + 1).padStart(2, "0")}
               reduce={reduce}
-              status={step.status}
+              status={statusOf(i)}
               subtitle={step.subtitle}
               title={step.title}
             />
             {i < steps.length - 1 ? (
               <Connector delay={i * 0.5} lit={isLit(i + 1)} reduce={reduce} />
             ) : (
-              <Fork delay={i * 0.5} reduce={reduce} />
+              <Fork delay={i * 0.5} lit={reached} reduce={reduce} />
             )}
           </li>
         ))}
-        <li className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+        <li aria-live="polite" className="grid grid-cols-2 gap-3 lg:grid-cols-1">
           {outcomes.map((o, i) => (
             <Node
               icon={OUTCOME_ICONS[i] ?? Trophy}
               index={`${steps.length + 1}${String.fromCharCode(65 + i)}`}
               key={o.title}
               reduce={reduce}
-              status="outcome"
+              status={reached ? "champion" : "outcome"}
               subtitle={o.subtitle}
               title={o.title}
             />

@@ -90,9 +90,9 @@ export function Statement() {
           <BlurHighlight
             active={active}
             className={cn(
-              "font-medium text-white",
-              // 1º parágrafo em destaque; os seguintes menores, como apoio
-              i === 0 ? "text-2xl leading-snug sm:text-4xl sm:leading-tight" : "mt-8 text-lg leading-relaxed text-neutral-300 sm:mt-10 sm:text-2xl"
+              // os parágrafos seguem o mesmo padrão tipográfico
+              "text-xl leading-relaxed font-medium text-white sm:text-3xl sm:leading-snug",
+              i > 0 && "mt-6 sm:mt-8"
             )}
             highlights={p.highlights}
             key={p.text}
@@ -295,7 +295,8 @@ export function Bento({ data }: { data: BentoView }) {
         {/* Próximos jogos — card em largura total */}
         <Reveal className="md:col-span-2 lg:col-span-12">
           <Card className="bg-neutral-900">
-            <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
+            {/* minmax(0,1fr): a coluna nunca cresce além do card (sem estouro no celular) */}
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
               <CardTitle
                 description={bento.matches.description}
                 icon={<CalendarDays className="size-5" />}
@@ -303,19 +304,20 @@ export function Bento({ data }: { data: BentoView }) {
               />
               <ul className="space-y-2">
                 {data.matches.map((m) => (
-                  <li className="flex items-center gap-4 rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5" key={m.id}>
-                    <span className="w-14 shrink-0 text-center text-xs leading-tight font-semibold text-brand">
+                  <li className="flex min-w-0 items-center gap-3 rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/5 sm:gap-4" key={m.id}>
+                    <span className="w-12 shrink-0 text-center text-xs leading-tight font-semibold text-brand sm:w-14">
                       {m.date}
                     </span>
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium text-white">{m.title}</span>
+                    <span className="min-w-0 flex-1">
+                      {/* celular: o nome da etapa quebra linha e o selo desce se faltar espaço; sm+: uma linha só */}
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 sm:flex-nowrap">
+                        <span className="min-w-0 text-sm font-medium break-words text-white sm:truncate">{m.title}</span>
                         {m.tag && (
-                          <span className="shrink-0 rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">{m.tag}</span>
+                          <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand sm:shrink-0">{m.tag}</span>
                         )}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-neutral-400">
-                        <MapPin className="size-3" /> {m.location}
+                      <span className="mt-0.5 flex items-start gap-1 text-xs text-neutral-400 sm:mt-0 sm:items-center">
+                        <MapPin className="mt-0.5 size-3 shrink-0 sm:mt-0" /> {m.location}
                       </span>
                     </span>
                   </li>

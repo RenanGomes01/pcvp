@@ -291,9 +291,9 @@ export const siteConfig = {
     pipeline: {
       label: "Jornada do atleta no CT",
       steps: [
-        { title: "Avaliação & Base", subtitle: "Fundamentos na areia", status: "done" },
-        { title: "Físico & Tático", subtitle: "Impulsão e leitura de jogo", status: "active" },
-        { title: "Ritmo de Jogo", subtitle: "Simulados sob pressão", status: "pending" },
+        { title: "Avaliação & Base", subtitle: "Fundamentos na areia" },
+        { title: "Físico & Tático", subtitle: "Impulsão e leitura de jogo" },
+        { title: "Ritmo de Jogo", subtitle: "Simulados sob pressão" },
       ],
       outcomes: [
         { title: "Circuito Estadual", subtitle: "Etapas CMTVP & Regional" },
@@ -375,12 +375,12 @@ export const siteConfig = {
         image: "/atletas/paulo.png",
         credentials: ["CREF 8751-G/MT", "Técnico Nível III CBV", "Seleção Brasileira de Base", "+30 anos no esporte"],
         shortBio:
-          "Treinador com mais de 30 anos de atuação no vôlei de praia e um dos principais formadores de talentos do Centro-Oeste. Técnico Nível III da CBV e observador nacional de talentos, integrou a comissão técnica da Seleção Brasileira Sub-17 e Sub-19 em Saquarema (RJ) e comandou títulos gerais brasileiros no CBI Sub-17 e Sub-21.",
+          "São mais de 30 anos no vôlei de praia: começou como atleta e, depois, formou-se em Educação Física, fez os cursos da CBV e tornou-se Técnico Nível III. Hoje é um dos principais formadores de talentos do Centro-Oeste: observador nacional de talentos da CBV, integrou a comissão técnica da Seleção Brasileira Sub-17 e Sub-19 em Saquarema (RJ) e comandou títulos gerais brasileiros no CBI Sub-17 e Sub-21.",
         sections: [
           {
             title: "Formação e Credenciais Profissionais",
             items: [
-              "Profissional de Educação Física (CREF 8751-G/MT) com certificação de Técnico Nível III da Confederação Brasileira de Voleibol (CBV).",
+              "Mais de três décadas no vôlei de praia: começou como atleta e, depois, estudou e formou-se em Educação Física (CREF 8751-G/MT), realizou os cursos da Confederação Brasileira de Voleibol (CBV) e tornou-se Técnico Nível III de vôlei de praia.",
               "Observador de talentos da CBV e ex-Diretor Técnico de Vôlei de Praia da Federação Mato-Grossense de Voleibol (FMTV).",
               "Integrante da comissão técnica da Seleção Brasileira Sub-17 e Sub-19 em acampamentos oficiais no CDV em Saquarema (RJ).",
             ],

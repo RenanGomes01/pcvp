@@ -2,9 +2,22 @@
 
 import { cn } from "@/lib/utils";
 import { motion, useInView, useReducedMotion } from "motion/react";
-import { type ElementType, Fragment, useMemo, useRef, useState } from "react";
+import { type ElementType, Fragment, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 type Segment = { text: string; highlight: boolean };
+
+/**
+ * Celular / toque: sem desfoque nenhum (texto 100% nítido e opaco). Sem mouse
+ * não existe o "passar por cima" que deixa o parágrafo nítido, e o `filter:
+ * blur` ainda pesa no Safari do iPhone.
+ */
+const SHARP_QUERY = "(max-width: 639px), (hover: none), (pointer: coarse)";
+function subscribeSharp(onChange: () => void) {
+  const mq = window.matchMedia(SHARP_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+const isSharp = () => window.matchMedia(SHARP_QUERY).matches;
 
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -70,6 +83,7 @@ export default function BlurHighlight({
   const ref = useRef<HTMLElement>(null);
   const inView = useInView(ref, { once: true, amount });
   const reduce = useReducedMotion() ?? false;
+  const sharp = useSyncExternalStore(subscribeSharp, isSharp, () => false);
   const segments = useMemo(() => splitSegments(text, highlights), [text, highlights]);
   const controlled = active !== undefined;
   const [hovered, setHovered] = useState(false);
@@ -92,7 +106,8 @@ export default function BlurHighlight({
   let phraseIndex = 0;
 
   return (
-    <Tag className={className} ref={ref} {...handlers}>
+    // `!important` vence o estilo inline do motion: nem o desfoque inicial do HTML do servidor aparece
+    <Tag className={cn(className, sharp && "[&_*]:[filter:none]!")} ref={ref} {...handlers}>
       {segments.map((seg, s) => {
         const words = seg.text.split(/(\s+)/);
 
@@ -109,11 +124,19 @@ export default function BlurHighlight({
                     initial={reduce ? "visible" : "hidden"}
                     key={i}
                     transition={quick ?? { duration, delay, ease: [0.22, 1, 0.36, 1] }}
-                    variants={{
-                      hidden: { opacity: 0, filter: "blur(10px)" },
-                      visible: { opacity: dimOpacity, filter: `blur(${dimBlur}px)` },
-                      focus: { opacity: 1, filter: "blur(0px)" },
-                    }}
+                    variants={
+                      sharp
+                        ? {
+                            hidden: { opacity: 0, filter: "blur(0px)" },
+                            visible: { opacity: 1, filter: "blur(0px)" },
+                            focus: { opacity: 1, filter: "blur(0px)" },
+                          }
+                        : {
+                            hidden: { opacity: 0, filter: "blur(10px)" },
+                            visible: { opacity: dimOpacity, filter: `blur(${dimBlur}px)` },
+                            focus: { opacity: 1, filter: "blur(0px)" },
+                          }
+                    }
                   >
                     {w}
                   </motion.span>
@@ -152,7 +175,7 @@ export default function BlurHighlight({
                   key={i}
                   transition={quick ?? { duration: 0.6, delay: phraseDelay + i * 0.03, ease: [0.22, 1, 0.36, 1] }}
                   variants={{
-                    hidden: { opacity: 0, filter: "blur(10px)" },
+                    hidden: { opacity: 0, filter: sharp ? "blur(0px)" : "blur(10px)" },
                     visible: { opacity: 1, filter: "blur(0px)" },
                     focus: { opacity: 1, filter: "blur(0px)" },
                   }}
