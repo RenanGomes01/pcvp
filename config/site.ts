@@ -240,7 +240,7 @@ export const siteConfig = {
       "campeao-sudamericano": "Campeão Sul-Americano Sub-18",
       cbi_sub21_uberlandia: "CBI Sub-21 em Uberlândia",
       "davi-prata-estadual": "Davi, prata no Estadual",
-      "larissa-quartas-brasileiro": "Larissa nas quartas do Brasileiro",
+      "larissa-quartas-brasileiro": "Laryssa nas quartas do Brasileiro",
       "maria-helena": "Maria Helena",
       "paulo-saquarema": "Paulo em Saquarema",
       "pcvp-rj": "PCVP no Rio de Janeiro",
@@ -341,9 +341,9 @@ export const siteConfig = {
         icon: "graduation",
         title: "Destaque no Esporte Universitário",
         description:
-          "A atleta Larissa Vasconcelos garantiu a vaga ao se sagrar campeã brasileira e, na sequência, conquistou o título de Campeã Sul-Americana Universitária (FISU).",
+          "A atleta Laryssa Dalmoro garantiu a vaga ao se sagrar campeã brasileira e, na sequência, conquistou o título de Campeã Sul-Americana Universitária (FISU).",
         previews: [
-          { text: "Larissa Vasconcelos", image: "/gallery/larissa-quartas-brasileiro.png", alt: "Larissa Vasconcelos em quadra", rotate: -4 },
+          { text: "Laryssa Dalmoro", image: "/gallery/larissa-quartas-brasileiro.png", alt: "Laryssa Dalmoro em quadra", rotate: -4 },
         ],
       },
       {
